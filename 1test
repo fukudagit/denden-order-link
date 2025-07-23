@@ -1,0 +1,317 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE_URL = 'http://127.0.0.1:5000/api';
+    // ★管理者APIを保護した場合、ここにAPIキーを定義してください
+    // const ADMIN_API_KEY = "your-very-secret-and-long-api-key";
+
+    // --- UI要素の取得 ---
+    const productsTableBody = document.querySelector('#products-table tbody');
+    const uploadBtn = document.getElementById('upload-btn');
+    const menuFileInput = document.getElementById('menu-file-input');
+    const addProductForm = document.getElementById('add-product-form');
+    const downloadBtn = document.getElementById('download-btn');
+    
+    // --- 修正モーダル関連のUI要素 ---
+    const editModalOverlay = document.getElementById('edit-modal-overlay');
+    const editForm = document.getElementById('edit-product-form');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    const editIdInput = document.getElementById('edit-id');
+
+    // --- グローバル変数 ---
+    let allProducts = [];
+
+    // --- 必須要素の存在チェック ---
+    if (!productsTableBody || !uploadBtn || !menuFileInput || !addProductForm || !downloadBtn || !editModalOverlay) {
+        console.error("管理画面の必須HTML要素が見つかりません。IDが正しいか確認してください。");
+        return;
+    }
+
+    /**
+     * 商品リストをAPIから読み込み、テーブルに描画する
+     */
+    async function loadProducts() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/get_products`);
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            allProducts = await response.json();
+            
+            productsTableBody.innerHTML = '';
+            allProducts.forEach(product => {
+                const tr = document.createElement('tr');
+                tr.dataset.productId = product.id;
+                
+                const soldOutBtnText = product.is_sold_out ? '販売再開' : '品切れ';
+                const soldOutBtnClass = product.is_sold_out ? 'action-btn in-stock-btn' : 'action-btn sold-out-btn';
+
+                tr.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td>${product.price.toLocaleString()}</td>
+                    <td>${product.category || ''}</td>
+                    <td>
+                        <button class="${soldOutBtnClass}" data-id="${product.id}" data-current-state="${product.is_sold_out}">
+                            ${soldOutBtnText}
+                        </button>
+                    </td>
+                    <td>
+                        <button class="action-btn edit-btn" data-id="${product.id}">修正</button>
+                        <button class="delete-btn" data-id="${product.id}" title="削除">🗑️</button>
+                    </td>
+                `;
+                productsTableBody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error('メニューの読み込みに失敗:', error);
+            productsTableBody.innerHTML = '<tr><td colspan="6">メニューの読み込みに失敗しました。サーバーが起動しているか確認してください。</td></tr>';
+        }
+    }
+
+    /**
+     * 修正モーダルを開き、選択された商品のデータをフォームに設定する
+     */
+    function openEditModal(productId) {
+        const productToEdit = allProducts.find(p => p.id === productId);
+        if (!productToEdit) {
+            console.error("修正対象の商品が見つかりません。");
+            return;
+        }
+
+        editIdInput.value = productToEdit.id;
+        document.getElementById('edit-name').value = productToEdit.name;
+        document.getElementById('edit-price').value = productToEdit.price;
+        document.getElementById('edit-category').value = productToEdit.category || '';
+        document.getElementById('edit-description').value = productToEdit.description || '';
+        document.getElementById('edit-image').value = productToEdit.image_path || '';
+        
+        editModalOverlay.classList.remove('hidden');
+    }
+
+    /**
+     * 修正モーダルを閉じる
+     */
+    function closeEditModal() {
+        editModalOverlay.classList.add('hidden');
+        editForm.reset();
+    }
+
+
+    // --- イベントリスナーの設定 ---
+
+    /**
+     * 現在のメニューをダウンロードする
+     */
+    downloadBtn.addEventListener('click', async () => {
+        if (!confirm('現在のメニューをExcelファイルとしてダウンロードしますか？')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/download_menu`, {
+                method: 'GET',
+                // headers: { 'X-Admin-API-Key': ADMIN_API_KEY } // APIキー認証を使う場合
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'menu_backup.xlsx';
+
+                if (disposition && disposition.indexOf('attachment') !== -1) {
+                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                    const matches = filenameRegex.exec(disposition);
+                    if (matches != null && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '');
+                    }
+                }
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } else {
+                const error = await response.json();
+                alert(`ダウンロードに失敗しました: ${error.message}`);
+            }
+        } catch (error) {
+            console.error('ダウンロードエラー:', error);
+            alert('ダウンロード処理中にエラーが発生しました。');
+        }
+    });
+
+    /**
+     * Excelファイルをアップロードする
+     */
+    uploadBtn.addEventListener('click', async () => {
+        const file = menuFileInput.files[0];
+        if (!file) {
+            alert('ファイルを選択してください。');
+            return;
+        }
+        if (!confirm('本当にアップロードしますか？既存のメニューは全て上書きされます。')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('menu_file', file);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/upload_menu`, {
+                method: 'POST',
+                body: formData,
+                // headers: { 'X-Admin-API-Key': ADMIN_API_KEY } // APIキー認証を使う場合
+            });
+            const result = await response.json();
+            alert(result.message);
+            if (response.ok) {
+                loadProducts();
+            }
+        } catch (error) {
+            alert('アップロード処理中にエラーが発生しました。');
+            console.error(error);
+        }
+    });
+
+    /**
+     * 新しいメニューを追加するフォームの送信イベント
+     */
+    addProductForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newProduct = {
+            name: document.getElementById('new-name').value,
+            price: parseInt(document.getElementById('new-price').value, 10),
+            category: document.getElementById('new-category').value,
+            description: document.getElementById('new-description').value,
+            image_path: document.getElementById('new-image').value
+        };
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/add_product`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'X-Admin-API-Key': ADMIN_API_KEY // APIキー認証を使う場合
+                },
+                body: JSON.stringify(newProduct)
+            });
+            
+            if (response.ok) {
+                alert('メニューを追加しました。');
+                addProductForm.reset();
+                loadProducts();
+            } else {
+                const result = await response.json();
+                alert(`追加に失敗しました: ${result.message || '不明なエラー'}`);
+            }
+        } catch (error) {
+            console.error('追加エラー:', error);
+            alert('メニューの追加処理中にエラーが発生しました。');
+        }
+    });
+
+    /**
+     * 商品テーブル内のクリックイベント（修正、削除、品切れトグル）
+     */
+    productsTableBody.addEventListener('click', async (e) => {
+        const target = e.target;
+        const buttonWithId = target.closest('[data-id]');
+        if (!buttonWithId) return;
+
+        const productId = parseInt(buttonWithId.dataset.id, 10);
+
+        if (buttonWithId.classList.contains('edit-btn')) {
+            openEditModal(productId);
+        }
+        
+        else if (buttonWithId.classList.contains('sold-out-btn') || buttonWithId.classList.contains('in-stock-btn')) {
+            const currentState = parseInt(buttonWithId.dataset.currentState, 10);
+            const newState = currentState === 0 ? 1 : 0;
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/update_product_status/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 'X-Admin-API-Key': ADMIN_API_KEY // APIキー認証を使う場合
+                    },
+                    body: JSON.stringify({ is_sold_out: newState })
+                });
+                if (response.ok) {
+                    loadProducts();
+                } else {
+                    alert('状態の更新に失敗しました。');
+                }
+            } catch (error) {
+                console.error('状態更新エラー:', error);
+                alert('状態の更新処理中にエラーが発生しました。');
+            }
+        }
+        
+        else if (buttonWithId.classList.contains('delete-btn')) {
+            if (confirm(`ID: ${productId} のメニューを本当に削除しますか？`)) {
+                try {
+                    await fetch(`${API_BASE_URL}/admin/delete_product/${productId}`, {
+                        method: 'POST',
+                        // headers: { 'X-Admin-API-Key': ADMIN_API_KEY } // APIキー認証を使う場合
+                    });
+                    loadProducts();
+                } catch (error) {
+                    console.error('削除エラー:', error);
+                    alert('メニューの削除処理中にエラーが発生しました。');
+                }
+            }
+        }
+    });
+
+    /**
+     * 修正フォームの「保存」ボタンのイベント
+     */
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const productId = editIdInput.value;
+        const updatedProduct = {
+            name: document.getElementById('edit-name').value,
+            price: parseInt(document.getElementById('edit-price').value, 10),
+            category: document.getElementById('edit-category').value,
+            description: document.getElementById('edit-description').value,
+            image_path: document.getElementById('new-image').value,
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/update_product/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'X-Admin-API-Key': ADMIN_API_KEY // APIキー認証を使う場合
+                },
+                body: JSON.stringify(updatedProduct)
+            });
+            const result = await response.json();
+            alert(result.message);
+            if (response.ok) {
+                closeEditModal();
+                loadProducts();
+            }
+        } catch (error) {
+            console.error("更新エラー:", error);
+            alert("メニューの更新処理中にエラーが発生しました。");
+        }
+    });
+
+    // 修正フォームの「キャンセル」ボタンのイベント
+    cancelEditBtn.addEventListener('click', closeEditModal);
+
+    // モーダルの外側をクリックした時に閉じる
+    editModalOverlay.addEventListener('click', (e) => {
+        if (e.target === editModalOverlay) {
+            closeEditModal();
+        }
+    });
+
+    // --- 初期化処理 ---
+    loadProducts();
+});

@@ -1,0 +1,18 @@
+# データベースファイル
+restaurant.db
+
+# Pythonの仮想環境フォルダ (もしあれば)
+venv/
+__pycache__/
+
+# OS固有のファイル
+.DS_Store
+Thumbs.db
+
+# アップロードされた画像ファイル
+# (永続ストレージを使うので、Git管理下には含めない)
+/images/*
+!/images/no-image.jpg
+
+# アップロードフォルダ
+/uploads/*

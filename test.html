@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ボタン動作テスト</title>
+    <style>
+        .menu-item { border: 1px solid black; padding: 10px; margin: 10px; width: 300px; }
+        .actions { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>ボタン動作テストページ</h1>
+    <p>下の「+」ボタンを押して、数値が変わるかテストします。</p>
+
+    <!-- 「絶品からあげ」一つだけのメニュー項目 -->
+    <div class="menu-item">
+        <h3>絶品からあげ</h3>
+        <div class="actions">
+            <div class="quantity-selector">
+                <button class="quantity-btn minus-btn">-</button>
+                <input type="number" class="quantity-input" value="1" min="1">
+                <button class="quantity-btn plus-btn">+</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // このHTML専用の、超シンプルなJavaScript
+        const plusBtn = document.querySelector('.plus-btn');
+        const minusBtn = document.querySelector('.minus-btn');
+        const quantityInput = document.querySelector('.quantity-input');
+
+        if (plusBtn && minusBtn && quantityInput) {
+            plusBtn.addEventListener('click', () => {
+                console.log("テストページの「+」がクリックされました！");
+                quantityInput.value = parseInt(quantityInput.value) + 1;
+            });
+
+            minusBtn.addEventListener('click', () => {
+                console.log("テストページの「-」がクリックされました！");
+                const currentValue = parseInt(quantityInput.value);
+                if (currentValue > 1) {
+                    quantityInput.value = currentValue - 1;
+                }
+            });
+            console.log("テストページのボタンにイベントを設定しました。");
+        } else {
+            console.error("テストページでボタンが見つかりませんでした。");
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';">
+    <title>メニュー管理画面</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 20px; 
+            background-color: #f9f9f9; 
+            color: #333;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: auto; 
+        }
+        h1, h2 { 
+            color: #333; 
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h1 {
+            border-bottom-style: solid;
+            border-bottom-color: #007bff;
+        }
+        h4 {
+             margin-top: 25px;
+             margin-bottom: 10px;
+             color: #555;
+             border-left: 4px solid #007bff;
+             padding-left: 8px;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 25px 0;
+        }
+        .section { 
+            background-color: #fff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: left; 
+            vertical-align: middle; 
+        }
+        th { 
+            background-color: #f2f2f2; 
+        }
+        
+        button {
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            padding: 8px 12px;
+            font-size: 1em;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            border: none;
+            color: white;
+            margin: 0 2px;
+        }
+        .sold-out-btn { background-color: #e67e22; }
+        .in-stock-btn { background-color: #27ae60; }
+        .edit-btn { background-color: #3498db; }
+        
+        .delete-btn {
+            background-color: transparent;
+            border: none;
+            color: #e74c3c;
+            font-size: 1.5em;
+            padding: 0 5px;
+            vertical-align: middle;
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .form-grid-new {
+            display: grid;
+            grid-template-columns: 1.5fr 2fr 1fr 1.5fr;
+            grid-template-rows: auto;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-field label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-field input, .form-field textarea, .form-field input[type="file"],
+        .form-grid input, .form-grid input[type="file"], .form-grid select, .form-grid textarea {
+            width: 100%; 
+            padding: 10px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 4px;
+        }
+        .form-field input[type="file"], .form-grid input[type="file"] {
+            padding: 5px;
+        }
+        
+        #form-name-jp { grid-column: 1 / 2; }
+        #form-desc-jp { grid-column: 2 / 3; }
+        #form-price { grid-column: 3 / 4; }
+        #form-category { grid-column: 4 / 5; grid-row: 1 / 3; }
+        #form-name-en { grid-column: 1 / 2; }
+        #form-desc-en { grid-column: 2 / 3; }
+        #form-image { grid-column: 3 / 4; }
+        #form-actions-add { grid-column: 1 / -1; }
+        
+        .form-actions { 
+            text-align: right; 
+        }
+        
+        .category-checkbox-container {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: #fff;
+        }
+        .category-checkbox-container .checkbox-item {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .category-checkbox-container .checkbox-item:last-child {
+            margin-bottom: 0;
+        }
+        .category-checkbox-container .checkbox-item label {
+            font-weight: normal;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .category-checkbox-container .checkbox-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        #add-product-btn, #add-category-btn { 
+            background-color: #2ecc71;
+            color: white; 
+            font-size: 1.1em;
+            border-color: #27ad60;
+        }
+        #upload-btn {
+            background-color: #f39c12;
+            color: white;
+            border-color: #e67e22;
+        }
+        #download-btn {
+            background-color: #17a2b8;
+            color: white;
+            border-color: #138496;
+        }
+
+        .hidden { display: none !important; }
+        #edit-modal-overlay, #edit-category-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #edit-modal-content {
+            width: 90%;
+            max-width: 800px;
+        }
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        #save-edit-btn, #save-category-btn { background-color: #2ecc71; color: white; }
+        #cancel-edit-btn, #cancel-category-btn { background-color: #bdc3c7; color: white; }
+
+        .sales-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .sales-controls label, .sort-buttons span {
+            font-size: 1.1em;
+        }
+        .sales-controls input[type="date"], .sales-controls button {
+            padding: 12px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .sort-buttons button {
+             padding: 10px 15px;
+             font-size: 1.1em;
+        }
+        .sort-buttons button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .sales-summary {
+            text-align: right;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        #password-change-form {
+            max-width: 500px;
+            display: grid;
+            gap: 15px;
+        }
+        #password-change-form label,
+        #opening-settings-form label, 
+        #store-info-form label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        #password-change-form input[type="password"],
+        #password-change-form input[type="text"] {
+             width: 100%; 
+            padding: 10px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+        }
+        #password-change-btn {
+            background-color: #e74c3c;
+            color: white;
+            justify-self: end;
+        }
+        
+        #opening-settings-form, #store-info-form { 
+            max-width: 600px; 
+            display: grid; 
+            gap: 15px; 
+        }
+        #store-info-form .form-grid {
+            grid-template-columns: 1fr;
+        }
+        #opening-settings-form textarea { 
+            width: 100%; 
+            min-height: 80px; 
+            padding: 10px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-family: inherit; 
+        }
+        #opening-settings-form select, #opening-settings-form input[type="number"] {
+            width: 100%; 
+            padding: 10px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+        }
+        .image-preview-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #opening-settings-form img, #store-info-form img { 
+            max-width: 150px; 
+            max-height: 150px; 
+            border: 1px solid #ddd; 
+            padding: 5px; 
+            border-radius: 5px; 
+        }
+        #opening-settings-form p, #store-info-form p {
+            margin: 10px 0 5px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .delete-image-btn {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 0.9em;
+            padding: 5px 10px;
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-container input {
+            padding-right: 40px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 1.2em;
+            color: #777;
+        }
+
+        @media (max-width: 992px) {
+            .form-grid-new {
+                grid-template-columns: 1fr 1fr;
+            }
+            .form-grid-new > .form-field {
+                grid-column: auto !important;
+                grid-row: auto !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid-new {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>メニュー管理画面</h1>
+        
+        <div class="section">
+            <h2>売上分析</h2>
+            <div class="sales-controls">
+                <label for="start-date">期間:</label>
+                <input type="date" id="start-date">
+                <span>〜</span>
+                <label for="end-date" class="hidden" style="display:none;">終了日</label>
+                <input type="date" id="end-date">
+                <button id="fetch-sales-btn">この期間で表示</button>
+            </div>
+            <div class="sort-buttons">
+                <span>並び替え:</span>
+                <button id="sort-by-time" class="active">時系列</button>
+                <button id="sort-by-table">テーブル別</button>
+                <button id="sort-by-product">商品別</button>
+                <button id="sort-by-duration">滞在時間</button>
+            </div>
+            <table id="sales-table">
+                <thead>
+                    <tr><th>注文日時</th><th>テーブルID</th><th>品名</th><th>数量</th><th>単価(円)</th><th>小計(円)</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <table id="sales-summary-table" class="hidden">
+                <thead>
+                    <tr><th>品名</th><th>合計数量</th><th>合計金額(円)</th><th>調理時間（分）</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <table id="session-duration-table" class="hidden">
+                <thead>
+                    <tr><th>テーブルID</th><th>利用開始日時</th><th>会計日時</th><th>滞在時間 (分)</th><th>会計金額 (円)</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div id="sales-summary" class="sales-summary"></div>
+        </div>
+
+        <div class="section">
+            <h2>Excelから一括登録 / バックアップ</h2>
+            <p>※Excelファイルには「カテゴリー設定」と「メニュー」の2つのシートが必要です。</p>
+            <p>※「カテゴリー設定」で表示順とカテゴリー名を定義し、「メニュー」のカテゴリー列に日本語名をスペース区切りで指定します。</p>
+            <button id="download-btn">現在のメニューとカテゴリー設定をダウンロード</button>
+            <hr>
+            <p>※既存のカテゴリーとメニューはすべて削除され、Excelの内容で完全に上書きされます。</p>
+            <label for="menu-file-input">アップロードするファイル:</label>
+            <input type="file" id="menu-file-input" accept=".xlsx">
+            <button id="upload-btn">アップロード実行</button>
+        </div>
+
+        <div class="section">
+            <h2>カテゴリー管理</h2>
+            <p>ここではカテゴリーの確認と個別の追加・修正・削除ができます。<strong>表示順の変更はExcelアップロードで行ってください。</strong></p>
+            <table id="categories-table">
+                <thead>
+                    <tr><th>ID</th><th>表示順</th><th>カテゴリー名 (日本語)</th><th>カテゴリー名 (English)</th><th>編集 / 削除</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <hr>
+            <h4>新規カテゴリー追加</h4>
+            <form id="add-category-form" class="form-grid">
+                <div>
+                    <label for="new-category-jp">カテゴリー名 (日本語)</label>
+                    <input type="text" id="new-category-jp" placeholder="カテゴリー名 (日本語)" required>
+                </div>
+                <div>
+                    <label for="new-category-en">カテゴリー名 (English)</label>
+                    <input type="text" id="new-category-en" placeholder="カテゴリー名 (English)">
+                </div>
+                <div class="form-actions">
+                    <button id="add-category-btn" type="submit">この内容で追加</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>メニュー一覧</h2>
+            <table id="products-table">
+                <thead>
+                    <tr><th>ID</th><th>品名</th><th>価格(円)</th><th>カテゴリー</th><th>品切れ設定</th><th>編集 / 削除</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>新規メニュー追加</h2>
+            <form id="add-product-form" class="form-grid-new">
+                <div class="form-field" id="form-name-jp">
+                    <label for="new-name">品名 (日本語)</label>
+                    <input type="text" id="new-name" placeholder="品名 (日本語)" required>
+                </div>
+                <div class="form-field" id="form-desc-jp">
+                    <label for="new-description">説明文 (日本語)</label>
+                    <textarea id="new-description" placeholder="説明文 (日本語)" rows="3"></textarea>
+                </div>
+                <div class="form-field" id="form-price">
+                    <label for="new-price">価格</label>
+                    <input type="number" id="new-price" placeholder="価格" required>
+                </div>
+                <div class="form-field" id="form-category">
+                    <label for="new-product-category-container">カテゴリー</label>
+                    <div id="new-product-category-container" class="category-checkbox-container"></div>
+                </div>
+                <div class="form-field" id="form-name-en">
+                    <label for="new-name-en">品名 (English)</label>
+                    <input type="text" id="new-name-en" placeholder="品名 (English)">
+                </div>
+                <div class="form-field" id="form-desc-en">
+                    <label for="new-description-en">説明文 (English)</label>
+                    <textarea id="new-description-en" placeholder="説明文 (English)" rows="3"></textarea>
+                </div>
+                <div class="form-field" id="form-image">
+                    <label for="new-image-file">画像ファイル (任意)</label>
+                    <input type="file" id="new-image-file" accept="image/*">
+                </div>
+                <div class="form-actions" id="form-actions-add">
+                    <button id="add-product-btn" type="submit">この内容で追加</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="section">
+            <h2>パスワード変更</h2>
+            <form id="password-change-form">
+                <div>
+                    <label>変更対象:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="target_user" value="admin" checked> 管理者</label>
+                        <label><input type="radio" name="target_user" value="staff"> スタッフ</label>
+                    </div>
+                </div>
+                <div>
+                    <label for="current-password">現在の管理者パスワード:</label>
+                    <div class="password-container">
+                        <input type="password" id="current-password" required>
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <div>
+                    <label for="new-password">新しいパスワード (6文字以上):</label>
+                    <div class="password-container">
+                        <input type="password" id="new-password" required>
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <div>
+                    <label for="confirm-password">新しいパスワード (確認用):</label>
+                    <div class="password-container">
+                        <input type="password" id="confirm-password" required>
+                        <span class="toggle-password">👁️</span>
+                    </div>
+                </div>
+                <button type="submit" id="password-change-btn">変更実行</button>
+            </form>
+        </div>
+        
+        <div class="section">
+            <h2>店舗情報設定 (領収書用)</h2>
+            <form id="store-info-form" name="store_info_form">
+                <p>ここで設定した内容は、領収書の上部に印刷されます。</p>
+                <div class="form-grid">
+                    <div>
+                        <label for="store-name">店舗名</label>
+                        <input type="text" id="store-name" name="store_name" placeholder="店舗名 (例: レストラン My Order LINK)" required>
+                    </div>
+                    <div>
+                        <label for="store-address">住所</label>
+                        <input type="text" id="store-address" name="store_address" placeholder="住所 (例: 東京都〇〇区〇〇 1-2-3)">
+                    </div>
+                    <div>
+                        <label for="store-tel">電話番号</label>
+                        <input type="text" id="store-tel" name="store_tel" placeholder="電話番号 (例: 03-1234-5678)">
+                    </div>
+                    <div>
+                        <label for="store-receipt-note">補足情報</label>
+                        <input type="text" id="store-receipt-note" name="store_receipt_note" placeholder="補足情報 (例: インボイス登録番号 T123456...)">
+                    </div>
+                </div>
+                
+                <hr>
+                <h4>レビュー誘導QRコード (任意)</h4>
+                <p>レシート下部に印刷するQRコード画像を設定できます。</p>
+                <div>
+                    <label for="store-qr-code-file">QRコード画像ファイル</label>
+                    <input type="file" id="store-qr-code-file" name="store_qr_code" accept="image/*">
+                    <p>現在のQRコード:</p>
+                    <div class="image-preview-container">
+                        <img id="current-qr-code-image" src="" alt="QRコードが設定されていません" style="display:none;">
+                        <button type="button" class="delete-image-btn hidden" id="delete-qr-code-btn">削除</button>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="save-store-info-btn" style="background-color: #34495e; color: white;">店舗情報を保存</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>オープニング画面設定</h2>
+            <form id="opening-settings-form">
+                <div>
+                    <label for="opening-message">表示メッセージ (画像の上に表示):</label>
+                    <textarea id="opening-message" name="opening_message" placeholder="例: ご来店ありがとうございます！"></textarea>
+                </div>
+                <div>
+                    <label>メッセージの表示方向:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="writing_mode" value="horizontal-tb" checked> 横書き</label>
+                        <label><input type="radio" name="writing_mode" value="vertical-rl"> 縦書き</label>
+                    </div>
+                </div>
+
+                <hr>
+                
+                <h4>スライドショー設定</h4>
+                <div>
+                    <label for="opening-effect">切り替え効果:</label>
+                    <select id="opening-effect" name="opening_effect">
+                        <option value="fade">フェード</option>
+                        <option value="blur">ブラー (ぼかし)</option>
+                        <option value="dissolve">ディゾルブ (クロスフェード)</option>
+                        <option value="slide">スライド</option>
+                    </select>
+                </div>
+                 <div>
+                    <label for="opening-duration">画像1枚の表示時間 (秒):</label>
+                    <input type="number" id="opening-duration" name="opening_duration" min="1" value="5">
+                </div>
+
+                <hr>
+
+                <div>
+                    <label for="opening-image-file-1">表示画像 1:</label>
+                    <input type="file" id="opening-image-file-1" name="opening_image_1" accept="image/*">
+                    <p>現在の画像1:</p>
+                    <div class="image-preview-container">
+                        <img id="current-opening-image-1" src="" alt="画像1が設定されていません" style="display:none;">
+                        <button type="button" class="delete-image-btn hidden" id="delete-image-btn-1" data-image-number="1">削除</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="opening-image-file-2">表示画像 2 (設定するとスライドショーになります):</label>
+                    <input type="file" id="opening-image-file-2" name="opening_image_2" accept="image/*">
+                    <p>現在の画像2:</p>
+                     <div class="image-preview-container">
+                        <img id="current-opening-image-2" src="" alt="画像2が設定されていません" style="display:none;">
+                        <button type="button" class="delete-image-btn hidden" id="delete-image-btn-2" data-image-number="2">削除</button>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="opening-settings-btn" style="background-color: #9b59b6; color: white;">設定を保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="edit-modal-overlay" class="hidden">
+        <div id="edit-modal-content" class="section">
+            <h2>メニュー修正</h2>
+            <form id="edit-product-form" class="form-grid-new" style="grid-template-columns: 1fr 1fr;">
+                 <div class="form-field" style="grid-column: 1 / 2;">
+                    <label for="edit-name">品名 (日本語)</label>
+                    <input type="text" id="edit-name" placeholder="品名 (日本語)" required>
+                </div>
+                <div class="form-field" style="grid-column: 2 / 3;">
+                    <label for="edit-price">価格</label>
+                    <input type="number" id="edit-price" placeholder="価格" required>
+                </div>
+                <div class="form-field" style="grid-column: 1 / 2;">
+                    <label for="edit-name-en">品名 (English)</label>
+                    <input type="text" id="edit-name-en" placeholder="品名 (English)">
+                </div>
+                 <div class="form-field" style="grid-column: 2 / 3; grid-row: 2 / 4;">
+                    <label for="edit-product-category-container">カテゴリー</label>
+                    <div id="edit-product-category-container" class="category-checkbox-container"></div>
+                </div>
+                <div class="form-field" style="grid-column: 1 / 2;">
+                    <label for="edit-description">説明文 (日本語)</label>
+                    <textarea id="edit-description" placeholder="説明文 (日本語)" rows="3"></textarea>
+                </div>
+                <div class="form-field" style="grid-column: 1 / 2;">
+                    <label for="edit-description-en">説明文 (English)</label>
+                    <textarea id="edit-description-en" placeholder="説明文 (English)" rows="3"></textarea>
+                </div>
+                <div class="form-field" style="grid-column: 1 / 3;">
+                    <label for="edit-image">画像ファイル名</label>
+                    <input type="text" id="edit-image" placeholder="画像ファイル名 (例: 1.jpg)">
+                    <p style="font-size: 0.9em; color: #666; margin-top: 5px;">新しい画像をアップロードする場合は、一度メニューを保存してから一覧画面で再度「修正」を押してください。</p>
+                </div>
+                <input type="hidden" id="edit-id">
+                <div class="modal-actions" style="grid-column: 1 / -1;">
+                    <button id="cancel-edit-btn" type="button">キャンセル</button>
+                    <button id="save-edit-btn" type="submit">この内容で保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="edit-category-modal-overlay" class="hidden">
+        <div id="edit-modal-content" class="section">
+            <h2>カテゴリー修正</h2>
+            <form id="edit-category-form">
+                <input type="hidden" id="edit-category-id">
+                <div class="form-grid" style="grid-template-columns: 1fr;">
+                    <div>
+                        <label for="edit-category-jp">カテゴリー名 (日本語)</label>
+                        <input type="text" id="edit-category-jp" placeholder="カテゴリー名 (日本語)" required>
+                    </div>
+                    <div>
+                        <label for="edit-category-en">カテゴリー名 (English)</label>
+                        <input type="text" id="edit-category-en" placeholder="カテゴリー名 (English)">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="cancel-category-btn" type="button">キャンセル</button>
+                    <button id="save-category-btn" type="submit">この内容で保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+
+    <!-- ▼▼▼▼▼ ここが修正点です ▼▼▼▼▼ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.toggle-password').forEach(icon => {
+                icon.addEventListener('click', (event) => {
+                    const iconElement = event.currentTarget;
+                    const container = iconElement.closest('.password-container');
+                    if (container) {
+                        const passwordInput = container.querySelector('input');
+                        if (passwordInput) {
+                            if (passwordInput.type === 'password') {
+                                passwordInput.type = 'text';
+                                iconElement.textContent = '🙈';
+                            } else {
+                                passwordInput.type = 'password';
+                                iconElement.textContent = '👁️';
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    <!-- ▲▲▲▲▲ ここが修正点です ▲▲▲▲▲ -->
+</body>
+</html>

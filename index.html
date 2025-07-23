@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Order LINK - メニュー</title>
+    <link rel="stylesheet" href="style.css?v=1.0.5"> <!-- バージョンを更新 -->
+</head>
+<body>
+    <div id="connection-status"></div>
+
+    <!-- ▼▼▼▼▼ ここからヘッダーの修正 ▼▼▼▼▼ -->
+    <header>
+        <div class="header-info">
+            <h1 id="store-name-display">レストラン「My Order LINK」</h1>
+            <p>
+                <span id="table-label">テーブル番号:</span>
+                <span id="table-number-value">1</span>
+            </p>
+        </div>
+        <div class="header-actions">
+            <div class="language-switcher">
+                <button id="lang-jp-btn" class="active" data-lang="jp">日本語</button>
+                <button id="lang-en-btn" data-lang="en">English</button>
+            </div>
+            <button id="checkout-request-btn" type="button">🧾 会計</button>
+            <button id="call-staff-btn" type="button">🔔 スタッフ呼び出し</button>
+        </div>
+    </header>
+    <!-- ▲▲▲▲▲ ここまでヘッダーの修正 ▲▲▲▲▲ -->
+
+    <main>
+        <div class="category-tabs">
+            <!-- JavaScriptによって、ここにタブが自動的に生成されます -->
+        </div>
+        <div id="menu-container">
+            <p style="text-align: center; padding: 20px;">メニューを読み込んでいます...</p>
+        </div>
+    </main>
+
+    <aside class="cart collapsed">
+        <div class="cart-header">
+            <h2>注文リスト <span id="cart-item-count-badge">(0品)</span></h2>
+            <span class="cart-toggle-icon">▲</span>
+        </div>
+        <div class="cart-body">
+            
+            <h4 id="cart-title">カート (追加する商品)</h4>
+            <ul id="cart-items">
+                <li>カートは空です。</li>
+            </ul>
+            
+            <p class="cart-total"><span id="cart-total-label">カート合計</span>: <span id="cart-total-price">0</span>円</p>
+            
+            <button id="show-modal-btn" disabled>注文内容の確認へ</button>
+        </div>
+    </aside>
+
+    <footer>
+        <p>© 2024 My Order LINK</p>
+    </footer>
+
+    <!-- 注文確認用モーダル -->
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-content">
+            <h2 id="modal-title">ご注文内容の確認</h2>
+            <div id="modal-cart-items"></div>
+            <div class="modal-total">
+                <strong><span id="modal-total-label">合計金額</span>:</strong> <span id="modal-total-price">0</span>円
+            </div>
+            <div class="modal-actions">
+                <button id="close-modal-btn" type="button">戻って編集する</button>
+                <button id="confirm-order-btn" type="button">この内容で注文を確定する</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 注文履歴・会計確認用モーダル -->
+    <div id="history-modal-overlay" class="hidden">
+        <div id="modal-content">
+            <h2 id="history-modal-title">ご注文履歴と会計</h2>
+            <p id="history-modal-desc">これまでのご注文は以下の通りです。</p>
+            <div id="history-modal-items" class="modal-cart-items-history">
+                <!-- JSで履歴がここに生成されます -->
+            </div>
+            <div class="modal-total">
+                <strong><span id="history-total-label">お会計金額 (合計)</span>:</strong> <span id="history-modal-total">0</span>円
+            </div>
+            <p id="history-modal-note" style="font-size: 0.9em; color: #555;">お会計を希望される場合は、下のボタンを押してスタッフをお呼びください。</p>
+            <div class="modal-actions">
+                <button id="close-history-modal-btn" type="button">閉じる</button>
+                <button id="confirm-checkout-btn" type="button">会計のためにスタッフを呼ぶ</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js?v=1.0.5"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+/* kitchen.css */
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #333; 
+    color: white; 
+    margin: 0; 
+    padding: 10px; 
+}
+header { 
+    text-align: center; 
+    padding-bottom: 10px; 
+    border-bottom: 2px solid #555; 
+}
+h1 {
+    margin: 10px 0;
+}
+main#kitchen-display { 
+    display: flex; 
+    flex-wrap: wrap; 
+    align-items: flex-start; 
+    gap: 15px; 
+    padding: 15px; 
+}
+.item-card {
+    background-color: #fff; 
+    color: #333; 
+    border: 4px solid #f39c12;
+    padding: 15px; 
+    border-radius: 8px; 
+    width: 280px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transition: opacity 0.5s, transform 0.5s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 200px; /* カードの最小高さを設定 */
+}
+.item-card .info { 
+    font-size: 1.2em; 
+    font-weight: bold; 
+    margin-bottom: 10px; 
+}
+.item-card .info span { 
+    font-weight: normal; 
+    font-size: 0.9em; 
+    color: #555; 
+}
+.item-card .item-name { 
+    font-size: 1.8em; /* 文字を大きく */
+    margin: 15px 0; 
+    font-weight: bold; 
+    text-align: center; 
+    flex-grow: 1; /* 中央に配置するためにスペースを広げる */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.item-card .quantity { 
+    font-size: 1.4em; /* 文字を大きく */
+    text-align: center; 
+    margin-bottom: 20px; 
+}
+.complete-btn {
+    width: 100%; 
+    padding: 15px; /* ボタンを大きく */
+    font-size: 1.2em; /* 文字を大きく */
+    cursor: pointer;
+    background-color: #3498db; 
+    color: white; 
+    border: none; 
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.complete-btn:hover { 
+    background-color: #2980b9; 
+}

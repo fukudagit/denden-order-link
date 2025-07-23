@@ -1,0 +1,63 @@
+/* print.css */
+@charset "UTF-8";
+
+/* --- 基本設定 (印刷とプレビュー共通) --- */
+body {
+    font-family: 'MS Gothic', 'Osaka-mono', monospace; /* レシートらしいフォント */
+    font-size: 10pt;
+    color: #000;
+}
+.receipt-container {
+    width: 80mm; /* レシートプリンターの一般的な幅 */
+    padding: 2mm; /* 左右の余白 */
+    box-sizing: border-box; /* paddingを含めて幅を計算 */
+    background-color: #fff;
+}
+.store-info { text-align: center; padding-bottom: 5px; }
+.store-info h1 { font-size: 14pt; margin: 10px 0 5px 0; }
+.store-info p { margin: 2px 0; font-size: 9pt; }
+hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+.receipt-info { text-align: left; }
+.receipt-info h2 { text-align: center; margin: 10px 0; font-size: 14pt; font-weight: bold; }
+.receipt-info p { margin: 3px 0; }
+.receipt-info div { margin: 10px 0; font-size: 12pt; border-bottom: 1px solid #000; padding-bottom: 2px; min-height: 1.5em; }
+#customer-name-field { display: inline-block; width: 80%; }
+.items-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+.items-table th, .items-table td { padding: 3px 0; text-align: left; vertical-align: top; }
+.items-table th { border-bottom: 1px solid #000; }
+.items-table .col-qty { text-align: right; padding-right: 5px; }
+.items-table .col-price { text-align: right; }
+.total-section { margin-top: 10px; text-align: right; font-size: 12pt; }
+.total-section p { margin: 5px 0; }
+.total-section p:last-child { font-size: 16pt; font-weight: bold; }
+.receipt-note { margin-top: 15px; font-size: 9pt; }
+.receipt-footer { margin-top: 20px; text-align: center; font-size: 9pt; }
+.qr-code-section { margin: 10px auto; }
+.qr-code-section p { margin: 0 0 5px 0; }
+/* ★★★ QRコードのスタイルを @media print の外に移動 ★★★ */
+.qr-code-section img {
+    max-width: 18mm;
+    width: 100%;
+    height: auto;
+}
+
+
+/* このファイルは印刷時のみに適用されるスタイルを定義します */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact; /* Chromeで色が正しく印刷されるように */
+        print-color-adjust: exact;
+    }
+
+    /* 印刷時に不要な要素を非表示に */
+    .print-only-button {
+        display: none !important;
+    }
+
+    /* プレビュー画面で非表示にしているものを、印刷時にも非表示にする */
+    header, footer, .no-print, #print-modal-overlay, #app-container, #close-print-modal-btn {
+        display: none !important;
+    }
+}

@@ -1,0 +1,310 @@
+/* hall.css */
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+    background-color: #f0f2f5; 
+    margin: 0; 
+    padding: 20px; 
+    color: #333;
+}
+header { 
+    text-align: center; 
+    padding-bottom: 10px; 
+    border-bottom: 2px solid #ccc; 
+    margin-bottom: 20px; 
+}
+header h1 {
+    color: #1d3557;
+    margin: 0;
+}
+.section { 
+    background-color: #fff; 
+    padding: 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
+    margin-bottom: 30px; 
+}
+.section h2 { 
+    margin-top: 0; 
+    padding-bottom: 10px; 
+    border-bottom: 1px solid #ddd; 
+    font-size: 1.4em; 
+    color: #457b9d;
+}
+.add-table-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+#table-number-input {
+    width: 150px;
+    padding: 10px;
+    font-size: 1.1em;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+#add-table-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    background-color: #007bff;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+#add-table-btn:hover {
+    background-color: #0056b3;
+}
+#table-cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.table-card-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    width: 220px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+}
+.table-card-item .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.table-card-item h3 {
+    margin: 0;
+    color: #343a40;
+    font-size: 1.5em;
+}
+
+.table-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+}
+.table-card-actions .action-btn {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 0;
+    font-size: 1em;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.table-card-actions .clear-table-btn {
+    background-color: #28a745;
+}
+.table-card-actions .clear-table-btn:hover {
+    background-color: #218838;
+}
+
+@keyframes blink-red {
+    0%   { background-color: #e74c3c; box-shadow: 0 0 12px #e74c3c; }
+    50%  { background-color: #c0392b; box-shadow: 0 0 3px #e74c3c; }
+    100% { background-color: #e74c3c; box-shadow: 0 0 12px #e74c3c; }
+}
+
+.table-card-actions .clear-table-btn.blinking {
+    animation: blink-red 1.2s infinite;
+}
+
+.table-card-actions .qr-show-btn { background-color: #3498db; }
+.table-card-actions .qr-show-btn:hover { background-color: #2980b9; }
+.table-card-actions .proxy-order-btn { background-color: #27ae60; }
+.table-card-actions .proxy-order-btn:hover { background-color: #2ecc71; }
+.columns-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    align-items: flex-start;
+}
+.column { flex: 1; min-width: 300px; }
+.column h3 {
+    font-size: 1.2em;
+    color: #333;
+    margin-top: 0;
+    padding-left: 10px;
+    border-left: 4px solid #1d3557;
+}
+#cooking-list, #ready-list, #served-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.order-group {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+}
+.order-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    font-weight: bold;
+    font-size: 1.1em;
+    background-color: #7f8c8d;
+    color: white;
+    transition: background-color 0.3s;
+}
+.order-group.type-cooking .order-group-header { background-color: #e67e22; }
+.order-group.type-ready .order-group-header { background-color: #3498db; }
+.order-group.type-served .order-group-header { background-color: #27ae60; }
+.order-group.is-calling .order-group-header {
+    background-color: #e74c3c;
+    animation: pulse-bg 1.5s infinite;
+}
+@keyframes pulse-bg {
+    0% { background-color: #e74c3c; }
+    50% { background-color: #c0392b; }
+    100% { background-color: #e74c3c; }
+}
+.resolve-call-btn {
+    padding: 5px 10px;
+    font-size: 0.9em;
+    border: 1px solid white;
+    background-color: transparent;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.resolve-call-btn:hover { background-color: rgba(255,255,255,0.2); }
+
+/* ▼▼▼ 削除: .checkout-call-indicator のスタイルは不要になったため削除 ▼▼▼ */
+/* ▲▲▲ 削除ここまで ▲▲▲ */
+
+.item-card {
+    background-color: #fdfdfd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+}
+.item-card:last-child { border-bottom: none; }
+.item-name {
+    font-weight: 500;
+}
+.item-details { flex-grow: 1; }
+.item-card .item-controls { display: flex; align-items: center; gap: 5px; }
+.item-card .item-controls button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.item-card .quantity-change-btn { width: 30px; height: 30px; background-color: #ecf0f1; color: #34495e; }
+.item-card .quantity-change-btn:hover { background-color: #d2d7d9; }
+.item-card .cancel-btn {
+    width: 30px;
+    height: 30px;
+    background-color: #e74c3c;
+    border-color: #c0392b;
+    color: white;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+    font-size: 1em;
+    padding: 0;
+}
+.item-card .cancel-btn:hover { background-color: #c0392b; }
+.item-card .serve-btn { height: 30px; padding: 0 12px; background-color: #27ae60; border-color: #27ae60; color: white; }
+.item-card .serve-btn:hover { background-color: #2ecc71; }
+#call-list-container { display: flex; flex-wrap: wrap; gap: 15px; }
+.call-card {
+    background-color: #fff1f0;
+    border: 3px solid #e74c3c;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+    animation: blink-red-border 1.2s infinite;
+}
+.call-card h3 { margin: 0 0 10px 0; font-size: 1.2em; color: #c0392b; }
+.call-card .resolve-call-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    border: 1px solid #c0392b;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.call-card .resolve-call-btn:hover { background-color: #c0392b; }
+@keyframes blink-red-border {
+    0% { border-color: #e74c3c; }
+    50% { border-color: #f5b7b1; }
+    100% { border-color: #e74c3c; }
+}
+.hidden { display: none !important; }
+#qr-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+#qr-modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    color: #333;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+#qr-modal-content h3 { margin-top: 0; font-size: 1.5em; }
+#qrcode { width: 256px; height: 256px; margin: 20px auto; }
+#close-qr-modal-btn {
+    margin-top: 20px;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    transition: background-color 0.2s;
+}
+#close-qr-modal-btn:hover {
+    background-color: #e0e0e0;
+}
+
+@keyframes blink-border-red {
+    0%   { border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.7); }
+    50%  { border-color: #f5b7b1; box-shadow: 0 0 3px rgba(231, 76, 60, 0.3); }
+    100% { border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.7); }
+}
+
+.table-card-item.is-calling {
+    border: 2px solid #e74c3c;
+    animation: blink-border-red 1.2s infinite;
+}
