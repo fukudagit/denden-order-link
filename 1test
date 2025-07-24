@@ -1,4 +1,4 @@
-# --- app.py (PostgreSQL対応・最終版) ---
+# --- app.py (PostgreSQL対応・最終完全版) ---
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import secrets
@@ -30,7 +30,6 @@ os.makedirs(IMAGES_FOLDER, exist_ok=True)
 # --- Flaskアプリケーション設定 ---
 app = Flask(__name__, static_folder='images', static_url_path='/images')
 
-# CORS設定: 環境変数FRONTEND_URLも許可する
 ALLOWED_ORIGINS = os.environ.get("FRONTEND_URL", "http://127.0.0.1:5000")
 CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}}) 
 
@@ -40,13 +39,38 @@ app.config['IMAGES_FOLDER'] = IMAGES_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 bcrypt = Bcrypt(app)
 
-# --- データベース初期化 (init_db) ---
+# --- データベースのマイグレーション ---
+def migrate_db():
+    with app.app_context():
+        db = get_db()
+        cursor = db.cursor(cursor_factory=RealDictCursor)
+        
+        migrations = [
+            "ALTER TABLE calls ADD COLUMN call_type TEXT NOT NULL DEFAULT 'normal'",
+            "ALTER TABLE calls ADD COLUMN status TEXT NOT NULL DEFAULT 'new'",
+            "ALTER TABLE categories ADD COLUMN display_order INTEGER NOT NULL DEFAULT 99",
+            "ALTER TABLE orders ADD COLUMN paid_at REAL",
+            "ALTER TABLE orders ADD COLUMN printed_at REAL",
+            "ALTER TABLE order_items ADD COLUMN ready_at REAL",
+            "ALTER TABLE products ADD COLUMN name_en TEXT",
+            "ALTER TABLE products ADD COLUMN description_en TEXT",
+        ]
+        
+        for migration in migrations:
+            try:
+                cursor.execute(migration)
+                db.commit()
+                print(f"Migration successful: {migration}")
+            except psycopg2.Error as e:
+                db.rollback()
+                print(f"Skipping migration (already applied or error): {e}")
+
+# --- データベース初期化 ---
 def init_db():
     with app.app_context():
         db = get_db()
         cursor = db.cursor(cursor_factory=RealDictCursor)
         
-        # PostgreSQLの構文 (SERIAL PRIMARY KEY, UNIQUE(column)) に修正
         cursor.execute('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, table_id INTEGER, total_price REAL, status TEXT, created_at REAL NOT NULL, paid_at REAL, printed_at REAL)')
         cursor.execute('CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, item_name TEXT, quantity INTEGER, price REAL, item_status TEXT, ready_at REAL, FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE)')
         cursor.execute('CREATE TABLE IF NOT EXISTS table_sessions (id SERIAL PRIMARY KEY, table_id INTEGER NOT NULL, access_token TEXT NOT NULL, status TEXT NOT NULL, created_at REAL NOT NULL, UNIQUE(access_token))')
@@ -695,7 +719,6 @@ def upload_menu():
                 if not row or not row[1]: continue
                 order, name_jp, name_en = (row + (99, None, None))[:3]
                 categories_to_insert.append((int(order or 99), name_jp, name_en))
-            # executemanyはpsycopg2では少し使い方が異なるため、ループで実行
             for cat in categories_to_insert:
                 cursor.execute("INSERT INTO categories (display_order, name_jp, name_en) VALUES (%s, %s, %s)", cat)
 
@@ -760,7 +783,6 @@ def add_product():
             cursor.execute("UPDATE products SET image_path = %s WHERE id = %s", (new_filename, product_id))
         
         if category_ids:
-            # executemanyはpsycopg2では少し使い方が異なるため、ループで実行
             for cid in category_ids:
                 cursor.execute("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", (product_id, cid))
 
@@ -836,9 +858,10 @@ def serve_static_file(path):
 # --- データベース初期化コマンド ---
 @app.cli.command("init-db")
 def init_db_command():
-    """データベーステーブルを作成します。"""
+    """データベーステーブルを作成し、マイグレーションを実行します。"""
     init_db()
-    print("Initialized the database.")
+    migrate_db()
+    print("Initialized and migrated the database.")
 
 # --- 実行 ---
 if __name__ == '__main__':
