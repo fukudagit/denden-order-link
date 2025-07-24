@@ -1,6 +1,4 @@
-# --- app.py (PostgreSQL対応版) ---
-
-# 【変更点】sqlite3の代わりにpsycopg2をインポート
+# --- app.py (PostgreSQL対応・最終版) ---
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import secrets
@@ -18,14 +16,11 @@ from flask_bcrypt import Bcrypt
 import jwt 
 
 # --- 定数 ---
-# 【変更点】DB_NAMEはもう使いません
-# DB_NAME = "restaurant.db" 
 UPLOAD_FOLDER = 'uploads'
 IMAGES_FOLDER = 'images' 
 
-# --- 【セキュリティ】秘密情報を環境変数から読み込む ---
+# --- 環境変数 ---
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
-
 if not JWT_SECRET_KEY:
     raise ValueError("Error: JWT_SECRET_KEY must be set as an environment variable.")
 
@@ -35,8 +30,8 @@ os.makedirs(IMAGES_FOLDER, exist_ok=True)
 # --- Flaskアプリケーション設定 ---
 app = Flask(__name__, static_folder='images', static_url_path='/images')
 
-# 【変更点】FRONTEND_URLも環境変数から取得するように変更（Renderで設定します）
-ALLOWED_ORIGINS = os.environ.get("FRONTEND_URL", "http://127.0.0.1:5000") 
+# CORS設定: 環境変数FRONTEND_URLも許可する
+ALLOWED_ORIGINS = os.environ.get("FRONTEND_URL", "http://127.0.0.1:5000")
 CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}}) 
 
 app.config['JSON_AS_ASCII'] = False
@@ -45,46 +40,13 @@ app.config['IMAGES_FOLDER'] = IMAGES_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 bcrypt = Bcrypt(app)
 
-# --- データベースのマイグレーション ---
-def migrate_db():
-    # PostgreSQLでは、テーブルやカラムの存在チェックはより複雑になるため、
-    # このマイグレーション関数は初回デプロイ以降はエラーを無視する形に簡略化します。
-    # 新しいスキーマ変更は手動か、Alembicのような本格的なマイグレーションツールで行うのが一般的です。
-    with app.app_context():
-        db = get_db()
-        # 【変更点】カーソル取得方法を変更
-        cursor = db.cursor(cursor_factory=RealDictCursor)
-        
-        migrations = [
-            "ALTER TABLE calls ADD COLUMN call_type TEXT NOT NULL DEFAULT 'normal'",
-            "ALTER TABLE calls ADD COLUMN status TEXT NOT NULL DEFAULT 'new'",
-            "ALTER TABLE categories ADD COLUMN display_order INTEGER NOT NULL DEFAULT 99",
-            "ALTER TABLE orders ADD COLUMN paid_at REAL",
-            "ALTER TABLE orders ADD COLUMN printed_at REAL",
-            "ALTER TABLE order_items ADD COLUMN ready_at REAL",
-            "ALTER TABLE products ADD COLUMN name_en TEXT",
-            "ALTER TABLE products ADD COLUMN description_en TEXT",
-        ]
-        
-        for migration in migrations:
-            try:
-                cursor.execute(migration)
-                print(f"Migration successful: {migration}")
-            except psycopg2.Error as e:
-                # DuplicateColumnなどのエラーは無視して次に進む
-                print(f"Skipping migration (already applied or error): {e}")
-                db.rollback() # エラーが発生したトランザクションをリセット
-            else:
-                db.commit() # 成功した場合のみコミット
-
-# --- データベース初期化 ---
+# --- データベース初期化 (init_db) ---
 def init_db():
     with app.app_context():
         db = get_db()
-        # 【変更点】カーソル取得方法を変更
         cursor = db.cursor(cursor_factory=RealDictCursor)
         
-        # 【変更点】PostgreSQLの構文 (SERIAL PRIMARY KEY) に変更
+        # PostgreSQLの構文 (SERIAL PRIMARY KEY, UNIQUE(column)) に修正
         cursor.execute('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, table_id INTEGER, total_price REAL, status TEXT, created_at REAL NOT NULL, paid_at REAL, printed_at REAL)')
         cursor.execute('CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, item_name TEXT, quantity INTEGER, price REAL, item_status TEXT, ready_at REAL, FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE)')
         cursor.execute('CREATE TABLE IF NOT EXISTS table_sessions (id SERIAL PRIMARY KEY, table_id INTEGER NOT NULL, access_token TEXT NOT NULL, status TEXT NOT NULL, created_at REAL NOT NULL, UNIQUE(access_token))')
@@ -102,10 +64,8 @@ def init_db():
             'store_qr_code_path': ''
         }
         for key, value in default_settings.items():
-            # 【変更点】INSERT OR IGNORE -> ON CONFLICT DO NOTHING
             cursor.execute("INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING", (key, value))
 
-        # 【変更点】? -> %s, ON CONFLICT DO NOTHING
         cursor.execute("SELECT * FROM users WHERE username = %s", ('admin',))
         if not cursor.fetchone():
             password_hash = bcrypt.generate_password_hash('admin_password').decode('utf-8')
@@ -119,12 +79,11 @@ def init_db():
         db.commit()
 
 # --- データベース接続ヘルパー ---
-# 【変更点】DATABASE_URL環境変数を使ってPostgreSQLに接続するように全体を変更
 def get_db():
     if 'db' not in g:
         db_url = os.environ.get("DATABASE_URL")
         if not db_url:
-            raise ValueError("DATABASE_URL is not set")
+            raise ValueError("DATABASE_URL environment variable is not set")
         g.db = psycopg2.connect(db_url)
     return g.db
 
@@ -168,7 +127,6 @@ def login():
     password = data.get('password')
     if not username or not password: return jsonify({"status": "error", "message": "Username and password required"}), 400
     db = get_db()
-    # 【変更点】カーソル取得方法とプレースホルダーを変更
     cursor = db.cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
@@ -249,7 +207,6 @@ def receive_order():
         active_order = cursor.fetchone()
         order_id = active_order['id'] if active_order else None
         if not order_id:
-            # 【変更点】lastrowidの代わりにRETURNING idを使用
             cursor.execute("INSERT INTO orders (table_id, total_price, status, created_at) VALUES (%s, %s, %s, %s) RETURNING id", (table_id, 0, 'active', datetime.now(timezone.utc).timestamp()))
             order_id = cursor.fetchone()['id']
         for item in order_data.get('items', []):
@@ -283,7 +240,6 @@ def handle_call():
     cursor = db.cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT id FROM table_sessions WHERE table_id = %s AND access_token = %s AND status = 'active'", (table_id, access_token))
     if not cursor.fetchone(): return jsonify({"status": "error", "message": "無効なアクセスです"}), 403
-    # 【変更点】PostgreSQLのON CONFLICT構文
     cursor.execute("""
         INSERT INTO calls (table_id, call_time, call_type, status) 
         VALUES (%s, %s, %s, 'new') 
@@ -733,15 +689,16 @@ def upload_menu():
             sheet_cat = workbook["カテゴリー設定"]
             cursor.execute("DELETE FROM product_categories")
             cursor.execute("DELETE FROM categories")
-            # 【変更点】PostgreSQLではシーケンスのリセットが必要
             cursor.execute("ALTER SEQUENCE categories_id_seq RESTART WITH 1")
             categories_to_insert = []
             for row in sheet_cat.iter_rows(min_row=2, values_only=True):
                 if not row or not row[1]: continue
                 order, name_jp, name_en = (row + (99, None, None))[:3]
                 categories_to_insert.append((int(order or 99), name_jp, name_en))
-            cursor.executemany("INSERT INTO categories (display_order, name_jp, name_en) VALUES (%s, %s, %s)", categories_to_insert)
-        
+            # executemanyはpsycopg2では少し使い方が異なるため、ループで実行
+            for cat in categories_to_insert:
+                cursor.execute("INSERT INTO categories (display_order, name_jp, name_en) VALUES (%s, %s, %s)", cat)
+
         count = 0
         if "メニュー" in workbook.sheetnames:
             sheet_menu = workbook["メニュー"]
@@ -803,8 +760,10 @@ def add_product():
             cursor.execute("UPDATE products SET image_path = %s WHERE id = %s", (new_filename, product_id))
         
         if category_ids:
-            cursor.executemany("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", [(product_id, cid) for cid in category_ids])
-        
+            # executemanyはpsycopg2では少し使い方が異なるため、ループで実行
+            for cid in category_ids:
+                cursor.execute("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", (product_id, cid))
+
         db.commit()
         return jsonify({"status": "success", "productId": product_id})
     except psycopg2.errors.UniqueViolation:
@@ -826,7 +785,8 @@ def update_product(product_id):
         cursor.execute("UPDATE products SET name = %s, price = %s, description = %s, name_en = %s, description_en = %s, image_path = %s WHERE id = %s", (data['name'], data['price'], data['description'], data['name_en'], data['description_en'], data['image_path'], product_id))
         cursor.execute("DELETE FROM product_categories WHERE product_id = %s", (product_id,))
         if category_ids:
-            cursor.executemany("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", [(product_id, cid) for cid in category_ids])
+            for cid in category_ids:
+                cursor.execute("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", (product_id, cid))
         db.commit()
         return jsonify({"status": "success"})
     except psycopg2.errors.UniqueViolation:
@@ -868,19 +828,18 @@ def favicon():
 @app.route('/<path:path>')
 def serve_static_file(path):
     if '..' in path: return "Not Found", 404
-    # 【変更点】静的ファイル配信のセキュリティを少し強化
-    # imagesフォルダ内のファイルのみを許可するなどの設定も可能
     safe_path = os.path.join('.', path)
     if os.path.exists(safe_path) and not os.path.isdir(safe_path):
         return send_from_directory('.', path)
     return "Not Found", 404
 
+# --- データベース初期化コマンド ---
+@app.cli.command("init-db")
+def init_db_command():
+    """データベーステーブルを作成します。"""
+    init_db()
+    print("Initialized the database.")
+
 # --- 実行 ---
 if __name__ == '__main__':
-    with app.app_context():
-        # 【変更点】ローカル実行時はinit_dbとmigrate_dbを呼ばないようにする
-        # Render環境でのみビルド時に実行されるようにしたいため
-        # ローカルでDBを初期化したい場合は別途スクリプトを実行する
-        pass
-    # 【変更点】本番環境ではgunicornが起動するため、debug=Falseを推奨
-    app.run(host='0.0.0.0', port=5000, debug=False)```
+    app.run(host='0.0.0.0', port=5000, debug=False)

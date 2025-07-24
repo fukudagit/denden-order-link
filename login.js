@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = passwordInput.value;
 
         try {
-            const response = await fetch('http://my-order-link.onrender.com/api/login', {
+            // ★★★ ここがHTTPSになっていることを確認 ★★★
+            const response = await fetch('https://my-order-link.onrender.com/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -27,13 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok && data.status === 'success') {
                 if (data.role === 'admin') {
-                    // 管理者キーをlocalStorageに保存（既存の仕組みを踏襲）
-                    localStorage.setItem('admin_api_key', 'your-very-secret-and-long-api-key'); 
+                    // 不要なキーは保存しない
                 }
-                // スタッフ用トークンは両方の場合で保存
                 localStorage.setItem('staff_token', data.token);
 
-                showRoleSelection(data.role); // 役割を渡す
+                showRoleSelection(data.role);
             } else {
                 errorMessage.textContent = data.message || 'ログインに失敗しました。';
             }
@@ -53,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         if (role === 'admin') {
-            // 管理者の場合は、管理者画面へのボタンを追加
             buttonsHtml += `<button onclick="window.location.href='/admin.html'" style="background-color: #c0392b;">管理者画面</button>`;
         }
         
