@@ -868,32 +868,20 @@ def favicon():
 @app.route('/<path:path>')
 def serve_static_file(path):
     if '..' in path: return "Not Found", 404
-    # 【変更点】静的ファイル配信のセキュリティを少し強化
-    # imagesフォルダ内のファイルのみを許可するなどの設定も可能
     safe_path = os.path.join('.', path)
     if os.path.exists(safe_path) and not os.path.isdir(safe_path):
         return send_from_directory('.', path)
     return "Not Found", 404
 
-# --- 実行 ---
-if __name__ == '__main__':
-    # --- ここから追記 ---
+# --- データベース初期化コマンド ---
 @app.cli.command("init-db")
 def init_db_command():
     """データベーステーブルを作成します。"""
     init_db()
-    # migrate_db() # 初回作成時は不要な場合が多いので一旦コメントアウト
     print("Initialized the database.")
-# --- ここまで追記 ---
 
 # --- 実行 ---
 if __name__ == '__main__':
-    # ... 既存のコードはそのまま ...
-    
-    with app.app_context():
-        # 【変更点】ローカル実行時はinit_dbとmigrate_dbを呼ばないようにする
-        # Render環境でのみビルド時に実行されるようにしたいため
-        # ローカルでDBを初期化したい場合は別途スクリプトを実行する
-        pass
-    # 【変更点】本番環境ではgunicornが起動するため、debug=Falseを推奨
+    # このブロックはローカルで `python app.py` と実行した時だけ使われます。
+    # Render (gunicorn) では使われませんが、開発のために残しておきます。
     app.run(host='0.0.0.0', port=5000, debug=False)
