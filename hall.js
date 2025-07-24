@@ -1,3 +1,5 @@
+// hall.js (修正済み・最終完全版)
+
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('staff_token');
     if (!token) {
@@ -5,7 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    document.querySelector('head').innerHTML += '<link rel="stylesheet" href="hall.css">';
+    // ★★★ APIのベースURLを定義 ★★★
+    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
+
+    document.querySelector('head').innerHTML += '<link rel="stylesheet" href="hall.css?v=2.0">'; // キャッシュ対策
     const appContainer = document.getElementById('app-container');
     appContainer.innerHTML = `
         <header><h1>ホールスタッフ用画面</h1></header>
@@ -87,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function refreshHallView() {
         try {
             const [ordersRes, callsRes] = await Promise.all([
-                authenticatedFetch('http://127.0.0.1:5000/api/get_all_active_orders'),
-                authenticatedFetch('http://127.0.0.1:5000/api/get_calls')
+                authenticatedFetch(`${API_BASE_URL}/get_all_active_orders`),
+                authenticatedFetch(`${API_BASE_URL}/get_calls`)
             ]);
             if (!ordersRes || !callsRes || !ordersRes.ok || !callsRes.ok) {
                 console.error("APIからのデータ取得に失敗しました。");
@@ -98,19 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const orders = await ordersRes.json();
             const calls = await callsRes.json(); 
 
-            // 呼び出しを「通常」と「会計」に分離する
             const normalCalls = calls.filter(c => c.call_type === 'normal');
             const checkoutCallingTableIds = new Set(
                 calls.filter(c => c.call_type === 'checkout').map(c => c.table_id)
             );
 
-            // --- 表示をクリア ---
             cookingListDiv.innerHTML = '';
             readyListDiv.innerHTML = '';
             servedListDiv.innerHTML = '';
             callListContainer.innerHTML = '';
             
-            // 「呼び出し中」リストには「通常呼び出し」のみを描画する
             if (normalCalls.length > 0) {
                 normalCalls.forEach(call => {
                     const callCard = document.createElement('div');
@@ -122,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  callListContainer.innerHTML = '<p style="color: #555;">現在、呼び出しはありません。</p>';
             }
 
-            // --- 注文状況リストを描画 ---
             const tablesData = {};
             orders.forEach(order => {
                 const tableId = order.table_id;
@@ -137,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.keys(tablesData).forEach(tableIdStr => {
                 const tableId = parseInt(tableIdStr, 10);
                 const data = tablesData[tableId];
-
                 const isCallingForCheckout = checkoutCallingTableIds.has(tableId);
 
                 if (data.cooking.length > 0) cookingListDiv.appendChild(createOrderGroup(tableId, data.cooking, 'cooking', false));
@@ -165,9 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const header = document.createElement('div');
         header.className = 'order-group-header';
-        const span = document.createElement('span');
-        span.textContent = `テーブル ${tableId}`;
-        header.appendChild(span);
+        header.innerHTML = `<span>テーブル ${tableId}</span>`;
 
         if (isCalling) {
             header.innerHTML += `<button class="resolve-call-btn" data-table-id="${tableId}">呼び出し対応</button>`;
@@ -188,14 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'item-card';
         card.dataset.itemId = item.id;
-        const details = document.createElement('div');
-        details.className = 'item-details';
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'item-name';
-        nameSpan.textContent = item.item_name;
-        details.appendChild(nameSpan);
-        details.append(` (数量: ${item.quantity})`);
-        card.appendChild(details);
+        card.innerHTML = `<div class="item-details"><span class="item-name">${item.item_name}</span> (数量: ${item.quantity})</div>`;
         return card;
     }
 
@@ -230,12 +221,14 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'table-card-item';
         card.dataset.tableId = tableId;
         card.innerHTML = `<div class="card-header"><h3>テーブル ${tableId}</h3></div><div class="table-card-actions"><button class="action-btn clear-table-btn" type="button">テーブルクリア</button><button class="action-btn qr-show-btn" type="button">QR表示</button><a href="${orderUrl}" class="action-btn proxy-order-btn" target="_blank" rel="noopener noreferrer">代行注文</a></div>`;
+        
         card.querySelector('.qr-show-btn').addEventListener('click', () => {
             qrModalTitle.textContent = `テーブル ${tableId} 用QRコード`;
             qrCodeContainer.innerHTML = '';
             new QRCode(qrCodeContainer, { text: orderUrl, width: 256, height: 256 });
             qrModalOverlay.classList.remove('hidden');
         });
+
         card.querySelector('.clear-table-btn').addEventListener('click', (event) => {
             event.stopPropagation();
             if (confirm(`テーブル ${tableId} のカードを画面から消しますか？\n(この操作は元に戻せません)`)) {
@@ -248,17 +241,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return card;
     }
+
     function setupEventListeners() {
         addTableBtn.addEventListener('click', async () => {
             const tableId = tableNumberInput.value;
             if (!tableId || tableId < 1) return alert('有効なテーブル番号を入力してください。');
             if (tableStates[tableId]) return alert(`テーブル ${tableId} は既に追加されています。`);
             try {
-                const res = await authenticatedFetch(`http://127.0.0.1:5000/api/generate_table_token/${tableId}`, { method: 'POST' });
+                const res = await authenticatedFetch(`${API_BASE_URL}/generate_table_token/${tableId}`, { method: 'POST' });
                 if (!res) return;
                 const data = await res.json();
                 if (res.ok && data.status === 'success') {
-                    const orderUrl = `${window.location.protocol}//${window.location.host.replace(/\/$/, '')}/index.html?table=${data.tableId}&token=${data.accessToken}`;
+                    // ★★★ window.location.originを使うように変更 ★★★
+                    const orderUrl = `${window.location.origin}/index.html?table=${data.tableId}&token=${data.accessToken}`;
                     tableStates[tableId] = { accessToken: data.accessToken, orderUrl: orderUrl };
                     const newCard = createTableCard(tableId, orderUrl);
                     if (newCard) tableCardsContainer.appendChild(newCard);
@@ -271,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('サーバーとの通信に失敗しました。');
             }
         });
+
         window.addEventListener('storage', (event) => {
             if (event.key === 'last_checked_out_table' && event.newValue) {
                 try {
@@ -286,13 +282,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
         document.body.addEventListener('click', async (event) => {
             const target = event.target;
             if (target.classList.contains('resolve-call-btn')) {
                 const tableId = target.dataset.tableId;
                 if (!tableId || !confirm(`テーブル ${tableId} の呼び出しに対応しましたか？`)) return;
                 try {
-                    const res = await authenticatedFetch(`http://127.0.0.1:5000/api/resolve_call/${tableId}`, { method: 'POST' });
+                    const res = await authenticatedFetch(`${API_BASE_URL}/resolve_call/${tableId}`, { method: 'POST' });
                     if (res && res.ok) refreshHallView();
                 } catch (e) {
                     console.error(e);
@@ -300,35 +297,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
+
             if (target.classList.contains('clear-table-btn') && target.classList.contains('blinking')) {
                 target.classList.remove('blinking');
             }
+
             const itemId = target.dataset.itemId;
             if (!itemId) return;
-            let url, body, needsRefresh = false;
+
+            let endpoint = '';
+            let body = null;
+
             if (target.classList.contains('quantity-change-btn')) {
-                const currentQuantity = parseInt(target.closest('.item-card').querySelector('.item-details').textContent.match(/数量: (\d+)/)[1]);
+                const currentQuantityText = target.closest('.item-card').querySelector('.item-details').textContent;
+                const match = currentQuantityText.match(/数量: (\d+)/);
+                if (!match) return;
+
+                const currentQuantity = parseInt(match[1]);
                 const change = parseInt(target.dataset.change);
                 const newQuantity = currentQuantity + change;
+
                 if (newQuantity > 0) {
-                    url = `/api/update_item_quantity/${itemId}`; body = { quantity: newQuantity }; needsRefresh = true;
+                    endpoint = `/update_item_quantity/${itemId}`;
+                    body = { quantity: newQuantity };
                 } else if (confirm('数量が0になります。商品をキャンセルしますか？')) {
-                    url = `/api/cancel_item/${itemId}`; needsRefresh = true;
+                    endpoint = `/cancel_item/${itemId}`;
                 }
             } else if (target.classList.contains('cancel-btn')) {
                 if (confirm('この商品を本当にキャンセルしますか？')) {
-                    url = `/api/cancel_item/${itemId}`; needsRefresh = true;
+                    endpoint = `/cancel_item/${itemId}`;
                 }
             } else if (target.classList.contains('serve-btn')) {
-                url = `/api/update_item_status/${itemId}`; body = { status: 'served' }; needsRefresh = true;
+                endpoint = `/update_item_status/${itemId}`;
+                body = { status: 'served' };
             }
-            if (needsRefresh) {
+
+            if (endpoint) {
                 try {
-                    const res = await authenticatedFetch(`http://127.0.0.1:5000${url}`, { method: 'POST', body: body ? JSON.stringify(body) : null });
+                    const res = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, { 
+                        method: 'POST', 
+                        body: body ? JSON.stringify(body) : null 
+                    });
                     if (res && res.ok) {
                         refreshHallView();
                     } else {
-                        const errText = await res.text();
+                        const errText = res ? await res.text() : 'No response from server.';
                         try {
                             alert(`操作失敗: ${JSON.parse(errText).message}`);
                         } catch {
@@ -341,13 +354,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
         closeQrModalBtn.addEventListener('click', () => qrModalOverlay.classList.add('hidden'));
         qrModalOverlay.addEventListener('click', (event) => {
             if (event.target === qrModalOverlay) qrModalOverlay.classList.add('hidden');
         });
     }
 
-    // 初期化と定期更新
     setupEventListeners();
     setInterval(refreshHallView, 3000); 
     refreshHallView();
