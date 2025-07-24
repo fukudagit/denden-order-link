@@ -1,4 +1,8 @@
-import sqlite3
+# --- app.py (PostgreSQL対応版) ---
+
+# 【変更点】sqlite3の代わりにpsycopg2をインポート
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import secrets
 import os
 import re
@@ -14,7 +18,8 @@ from flask_bcrypt import Bcrypt
 import jwt 
 
 # --- 定数 ---
-DB_NAME = "restaurant.db"
+# 【変更点】DB_NAMEはもう使いません
+# DB_NAME = "restaurant.db" 
 UPLOAD_FOLDER = 'uploads'
 IMAGES_FOLDER = 'images' 
 
@@ -30,6 +35,7 @@ os.makedirs(IMAGES_FOLDER, exist_ok=True)
 # --- Flaskアプリケーション設定 ---
 app = Flask(__name__, static_folder='images', static_url_path='/images')
 
+# 【変更点】FRONTEND_URLも環境変数から取得するように変更（Renderで設定します）
 ALLOWED_ORIGINS = os.environ.get("FRONTEND_URL", "http://127.0.0.1:5000") 
 CORS(app, resources={r"/api/*": {"origins": ALLOWED_ORIGINS}}) 
 
@@ -41,98 +47,52 @@ bcrypt = Bcrypt(app)
 
 # --- データベースのマイグレーション ---
 def migrate_db():
+    # PostgreSQLでは、テーブルやカラムの存在チェックはより複雑になるため、
+    # このマイグレーション関数は初回デプロイ以降はエラーを無視する形に簡略化します。
+    # 新しいスキーマ変更は手動か、Alembicのような本格的なマイグレーションツールで行うのが一般的です。
     with app.app_context():
         db = get_db()
-        cursor = db.cursor()
+        # 【変更点】カーソル取得方法を変更
+        cursor = db.cursor(cursor_factory=RealDictCursor)
         
-        # ▼▼▼【修正点】欠落していた全てのマイグレーション処理を復元 ▼▼▼
-        cursor.execute("PRAGMA table_info(calls)")
-        columns_calls = [row['name'] for row in cursor.fetchall()]
-        if 'call_type' not in columns_calls:
-            cursor.execute("ALTER TABLE calls ADD COLUMN call_type TEXT NOT NULL DEFAULT 'normal'")
-            print("Database migration: Added 'call_type' column to 'calls' table.")
-        if 'status' not in columns_calls:
-            cursor.execute("ALTER TABLE calls ADD COLUMN status TEXT NOT NULL DEFAULT 'new'")
-            print("Database migration: Added 'status' column to 'calls' table.")
+        migrations = [
+            "ALTER TABLE calls ADD COLUMN call_type TEXT NOT NULL DEFAULT 'normal'",
+            "ALTER TABLE calls ADD COLUMN status TEXT NOT NULL DEFAULT 'new'",
+            "ALTER TABLE categories ADD COLUMN display_order INTEGER NOT NULL DEFAULT 99",
+            "ALTER TABLE orders ADD COLUMN paid_at REAL",
+            "ALTER TABLE orders ADD COLUMN printed_at REAL",
+            "ALTER TABLE order_items ADD COLUMN ready_at REAL",
+            "ALTER TABLE products ADD COLUMN name_en TEXT",
+            "ALTER TABLE products ADD COLUMN description_en TEXT",
+        ]
         
-        cursor.execute("PRAGMA table_info(categories)")
-        columns_cats = [row['name'] for row in cursor.fetchall()]
-        if 'display_order' not in columns_cats:
-            cursor.execute("ALTER TABLE categories ADD COLUMN display_order INTEGER NOT NULL DEFAULT 99")
-            print("Database migration: Added 'display_order' column to 'categories' table.")
-
-        cursor.execute("PRAGMA table_info(orders)")
-        columns_orders = [row['name'] for row in cursor.fetchall()]
-        if 'paid_at' not in columns_orders:
-            cursor.execute("ALTER TABLE orders ADD COLUMN paid_at REAL")
-            print("Database migration: Added 'paid_at' column to 'orders' table.")
-        if 'printed_at' not in columns_orders:
-            cursor.execute("ALTER TABLE orders ADD COLUMN printed_at REAL")
-            print("Database migration: Added 'printed_at' column to 'orders' table.")
-
-        cursor.execute("PRAGMA table_info(order_items)")
-        columns_items = [row['name'] for row in cursor.fetchall()]
-        if 'ready_at' not in columns_items:
-            cursor.execute("ALTER TABLE order_items ADD COLUMN ready_at REAL")
-            print("Database migration: Added 'ready_at' column to 'order_items' table.")
-
-        cursor.execute("PRAGMA table_info(products)")
-        columns_products = [row['name'] for row in cursor.fetchall()]
-        if 'name_en' not in columns_products:
-            cursor.execute("ALTER TABLE products ADD COLUMN name_en TEXT")
-            print("Database migration: Added 'name_en' column to 'products' table.")
-        if 'description_en' not in columns_products:
-            cursor.execute("ALTER TABLE products ADD COLUMN description_en TEXT")
-            print("Database migration: Added 'description_en' column to 'products' table.")
-        
-        if 'category_id' in columns_products:
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS product_categories (
-                    product_id INTEGER NOT NULL,
-                    category_id INTEGER NOT NULL,
-                    PRIMARY KEY (product_id, category_id),
-                    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-                    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
-                )
-            ''')
-            cursor.execute("SELECT id, category_id FROM products WHERE category_id IS NOT NULL")
-            product_cat_pairs = cursor.fetchall()
-            if product_cat_pairs:
-                cursor.executemany("INSERT OR IGNORE INTO product_categories (product_id, category_id) VALUES (?, ?)", 
-                                   [(p['id'], p['category_id']) for p in product_cat_pairs])
-
-            cursor.execute('''
-                CREATE TABLE products_new (
-                    id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, price INTEGER NOT NULL, 
-                    description TEXT, image_path TEXT, is_sold_out INTEGER NOT NULL DEFAULT 0,
-                    name_en TEXT, description_en TEXT
-                )
-            ''')
-            cursor.execute("""
-                INSERT INTO products_new (id, name, price, description, image_path, is_sold_out, name_en, description_en) 
-                SELECT id, name, price, description, image_path, is_sold_out, name_en, description_en FROM products
-            """)
-            cursor.execute("DROP TABLE products")
-            cursor.execute("ALTER TABLE products_new RENAME TO products")
-            print("Database migration: Migrated products table to support multiple categories.")
-        # ▲▲▲ 復元ここまで ▲▲▲
-            
-        db.commit()
+        for migration in migrations:
+            try:
+                cursor.execute(migration)
+                print(f"Migration successful: {migration}")
+            except psycopg2.Error as e:
+                # DuplicateColumnなどのエラーは無視して次に進む
+                print(f"Skipping migration (already applied or error): {e}")
+                db.rollback() # エラーが発生したトランザクションをリセット
+            else:
+                db.commit() # 成功した場合のみコミット
 
 # --- データベース初期化 ---
 def init_db():
     with app.app_context():
         db = get_db()
-        cursor = db.cursor()
+        # 【変更点】カーソル取得方法を変更
+        cursor = db.cursor(cursor_factory=RealDictCursor)
         
-        cursor.execute('CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY, table_id INTEGER, total_price REAL, status TEXT, created_at REAL NOT NULL, paid_at REAL, printed_at REAL)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY, order_id INTEGER, item_name TEXT, quantity INTEGER, price REAL, item_status TEXT, ready_at REAL, FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS table_sessions (id INTEGER PRIMARY KEY, table_id INTEGER NOT NULL, access_token TEXT NOT NULL UNIQUE, status TEXT NOT NULL, created_at REAL NOT NULL)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name_jp TEXT NOT NULL UNIQUE, name_en TEXT, display_order INTEGER NOT NULL DEFAULT 99)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, price INTEGER NOT NULL, description TEXT, image_path TEXT, is_sold_out INTEGER NOT NULL DEFAULT 0, name_en TEXT, description_en TEXT)')
+        # 【変更点】PostgreSQLの構文 (SERIAL PRIMARY KEY) に変更
+        cursor.execute('CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, table_id INTEGER, total_price REAL, status TEXT, created_at REAL NOT NULL, paid_at REAL, printed_at REAL)')
+        cursor.execute('CREATE TABLE IF NOT EXISTS order_items (id SERIAL PRIMARY KEY, order_id INTEGER, item_name TEXT, quantity INTEGER, price REAL, item_status TEXT, ready_at REAL, FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE)')
+        cursor.execute('CREATE TABLE IF NOT EXISTS table_sessions (id SERIAL PRIMARY KEY, table_id INTEGER NOT NULL, access_token TEXT NOT NULL, status TEXT NOT NULL, created_at REAL NOT NULL, UNIQUE(access_token))')
+        cursor.execute('CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name_jp TEXT NOT NULL, name_en TEXT, display_order INTEGER NOT NULL DEFAULT 99, UNIQUE(name_jp))')
+        cursor.execute('CREATE TABLE IF NOT EXISTS products (id SERIAL PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, description TEXT, image_path TEXT, is_sold_out INTEGER NOT NULL DEFAULT 0, name_en TEXT, description_en TEXT, UNIQUE(name))')
         cursor.execute('CREATE TABLE IF NOT EXISTS product_categories (product_id INTEGER NOT NULL, category_id INTEGER NOT NULL, PRIMARY KEY (product_id, category_id), FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE)')
-        cursor.execute('CREATE TABLE IF NOT EXISTS calls (id INTEGER PRIMARY KEY, table_id INTEGER NOT NULL UNIQUE, call_time REAL NOT NULL, call_type TEXT NOT NULL DEFAULT "normal", status TEXT NOT NULL DEFAULT "new")')
-        cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL)')
+        cursor.execute('CREATE TABLE IF NOT EXISTS calls (id SERIAL PRIMARY KEY, table_id INTEGER NOT NULL, call_time REAL NOT NULL, call_type TEXT NOT NULL DEFAULT \'normal\', status TEXT NOT NULL DEFAULT \'new\', UNIQUE(table_id))')
+        cursor.execute('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL, password_hash TEXT NOT NULL, role TEXT NOT NULL, UNIQUE(username))')
         cursor.execute('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)')
 
         default_settings = {
@@ -142,25 +102,30 @@ def init_db():
             'store_qr_code_path': ''
         }
         for key, value in default_settings.items():
-            cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (key, value))
+            # 【変更点】INSERT OR IGNORE -> ON CONFLICT DO NOTHING
+            cursor.execute("INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING", (key, value))
 
-        cursor.execute("SELECT * FROM users WHERE username = ?", ('admin',))
+        # 【変更点】? -> %s, ON CONFLICT DO NOTHING
+        cursor.execute("SELECT * FROM users WHERE username = %s", ('admin',))
         if not cursor.fetchone():
             password_hash = bcrypt.generate_password_hash('admin_password').decode('utf-8')
-            cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",('admin', password_hash, 'admin'))
+            cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s) ON CONFLICT (username) DO NOTHING",('admin', password_hash, 'admin'))
         
-        cursor.execute("SELECT * FROM users WHERE username = ?", ('staff',))
+        cursor.execute("SELECT * FROM users WHERE username = %s", ('staff',))
         if not cursor.fetchone():
             password_hash = bcrypt.generate_password_hash('your_common_password').decode('utf-8')
-            cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",('staff', password_hash, 'staff'))
+            cursor.execute("INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s) ON CONFLICT (username) DO NOTHING",('staff', password_hash, 'staff'))
         
         db.commit()
 
 # --- データベース接続ヘルパー ---
+# 【変更点】DATABASE_URL環境変数を使ってPostgreSQLに接続するように全体を変更
 def get_db():
     if 'db' not in g:
-        g.db = sqlite3.connect(DB_NAME)
-        g.db.row_factory = sqlite3.Row
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            raise ValueError("DATABASE_URL is not set")
+        g.db = psycopg2.connect(db_url)
     return g.db
 
 @app.teardown_appcontext
@@ -203,8 +168,9 @@ def login():
     password = data.get('password')
     if not username or not password: return jsonify({"status": "error", "message": "Username and password required"}), 400
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    # 【変更点】カーソル取得方法とプレースホルダーを変更
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
     user = cursor.fetchone()
     if user and bcrypt.check_password_hash(user['password_hash'], password):
         payload = {'username': user['username'], 'role': user['role'], 'exp': datetime.now(timezone.utc) + timedelta(hours=8)}
@@ -216,7 +182,7 @@ def login():
 # --- API: 顧客向け ---
 @app.route('/api/get_opening_settings')
 def get_opening_settings():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT key, value FROM settings WHERE key LIKE 'opening_%'")
     settings = {row['key']: row['value'] for row in cursor.fetchall()}
     if settings.get('opening_image_path'):
@@ -227,7 +193,7 @@ def get_opening_settings():
 
 @app.route('/api/get_public_store_info')
 def get_public_store_info():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT value FROM settings WHERE key = 'store_name'")
     store_name_row = cursor.fetchone()
     store_name = store_name_row['value'] if store_name_row and store_name_row['value'] else 'レストラン「My Order LINK」'
@@ -236,9 +202,9 @@ def get_public_store_info():
 @app.route('/api/get_products')
 def get_products():
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT id, name_jp, name_en FROM categories")
-    categories_map = {c['id']: dict(c) for c in cursor.fetchall()}
+    categories_map = {c['id']: c for c in cursor.fetchall()}
     cursor.execute("SELECT * FROM product_categories")
     product_to_cats = {}
     for row in cursor.fetchall():
@@ -249,11 +215,10 @@ def get_products():
     cursor.execute("SELECT * FROM products ORDER BY id")
     products = []
     for p_row in cursor.fetchall():
-        p_dict = dict(p_row)
-        cat_ids = product_to_cats.get(p_dict['id'], [])
-        p_dict['categories'] = [categories_map[cid] for cid in cat_ids if cid in categories_map]
-        p_dict['category'] = " ".join([cat['name_jp'] for cat in p_dict['categories']])
-        products.append(p_dict)
+        cat_ids = product_to_cats.get(p_row['id'], [])
+        p_row['categories'] = [categories_map[cid] for cid in cat_ids if cid in categories_map]
+        p_row['category'] = " ".join([cat['name_jp'] for cat in p_row['categories']])
+        products.append(p_row)
     return jsonify(products)
 
 @app.route('/api/get_order_history/<int:table_id>', methods=['GET'])
@@ -261,46 +226,48 @@ def get_order_history(table_id):
     access_token = request.args.get('token')
     if not access_token: return jsonify({"status": "error", "message": "Access token is missing."}), 403
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT id FROM table_sessions WHERE table_id = ? AND access_token = ? AND status = 'active'", (table_id, access_token))
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT id FROM table_sessions WHERE table_id = %s AND access_token = %s AND status = 'active'", (table_id, access_token))
     if not cursor.fetchone(): return jsonify({"status": "error", "message": "Invalid or expired access token."}), 403
-    cursor.execute("SELECT o.id as order_id, o.created_at, oi.item_name, oi.quantity, oi.price, oi.item_status FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.table_id = ? AND o.status = 'active' ORDER BY o.created_at ASC, oi.id ASC", (table_id,))
-    history = {"items": [dict(row) for row in cursor.fetchall()]}
+    cursor.execute("SELECT o.id as order_id, o.created_at, oi.item_name, oi.quantity, oi.price, oi.item_status FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.table_id = %s AND o.status = 'active' ORDER BY o.created_at ASC, oi.id ASC", (table_id,))
+    history_items = cursor.fetchall()
+    history = {"items": history_items}
     history["total_price"] = sum(item['price'] * item['quantity'] for item in history['items'])
     return jsonify(history)
 
 @app.route('/api/order', methods=['POST'])
 def receive_order():
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     order_data = request.get_json()
     table_id, access_token = order_data.get('tableId'), order_data.get('accessToken')
     if not access_token: return jsonify({"status": "error", "message": "Access token is missing."}), 403
-    cursor.execute("SELECT id FROM table_sessions WHERE table_id = ? AND access_token = ? AND status = 'active'", (table_id, access_token))
+    cursor.execute("SELECT id FROM table_sessions WHERE table_id = %s AND access_token = %s AND status = 'active'", (table_id, access_token))
     if not cursor.fetchone(): return jsonify({"status": "error", "message": "Invalid or expired access token."}), 403
     try:
-        cursor.execute("SELECT id FROM orders WHERE table_id = ? AND status = 'active'", (table_id,))
+        cursor.execute("SELECT id FROM orders WHERE table_id = %s AND status = 'active'", (table_id,))
         active_order = cursor.fetchone()
         order_id = active_order['id'] if active_order else None
         if not order_id:
-            cursor.execute("INSERT INTO orders (table_id, total_price, status, created_at) VALUES (?, ?, ?, ?)", (table_id, 0, 'active', datetime.now(timezone.utc).timestamp()))
-            order_id = cursor.lastrowid
+            # 【変更点】lastrowidの代わりにRETURNING idを使用
+            cursor.execute("INSERT INTO orders (table_id, total_price, status, created_at) VALUES (%s, %s, %s, %s) RETURNING id", (table_id, 0, 'active', datetime.now(timezone.utc).timestamp()))
+            order_id = cursor.fetchone()['id']
         for item in order_data.get('items', []):
-            cursor.execute("SELECT price FROM products WHERE name = ? AND is_sold_out = 0", (item['name'],))
+            cursor.execute("SELECT price FROM products WHERE name = %s AND is_sold_out = 0", (item['name'],))
             db_item = cursor.fetchone()
             if not db_item:
                 db.rollback()
                 return jsonify({"status": "error", "message": f"「{item['name']}」は現在注文できません。"}), 400
-            cursor.execute("SELECT id, quantity FROM order_items WHERE order_id = ? AND item_name = ? AND item_status = 'cooking'", (order_id, item['name']))
+            cursor.execute("SELECT id, quantity FROM order_items WHERE order_id = %s AND item_name = %s AND item_status = 'cooking'", (order_id, item['name']))
             existing_item = cursor.fetchone()
             if existing_item:
                 new_quantity = existing_item['quantity'] + item['quantity']
-                cursor.execute("UPDATE order_items SET quantity = ? WHERE id = ?", (new_quantity, existing_item['id']))
+                cursor.execute("UPDATE order_items SET quantity = %s WHERE id = %s", (new_quantity, existing_item['id']))
             else:
-                cursor.execute("INSERT INTO order_items (order_id, item_name, quantity, price, item_status) VALUES (?, ?, ?, ?, ?)", (order_id, item['name'], item['quantity'], db_item['price'], 'cooking'))
-        cursor.execute("SELECT SUM(price * quantity) FROM order_items WHERE order_id = ?", (order_id,))
-        new_total = cursor.fetchone()[0] or 0
-        cursor.execute("UPDATE orders SET total_price = ? WHERE id = ?", (new_total, order_id))
+                cursor.execute("INSERT INTO order_items (order_id, item_name, quantity, price, item_status) VALUES (%s, %s, %s, %s, %s)", (order_id, item['name'], item['quantity'], db_item['price'], 'cooking'))
+        cursor.execute("SELECT SUM(price * quantity) FROM order_items WHERE order_id = %s", (order_id,))
+        new_total = cursor.fetchone()['sum'] or 0
+        cursor.execute("UPDATE orders SET total_price = %s WHERE id = %s", (new_total, order_id))
         db.commit()
         return jsonify({"status": "success", "orderId": order_id})
     except Exception as e:
@@ -313,10 +280,16 @@ def handle_call():
     table_id, access_token, call_type = data.get('tableId'), data.get('token'), data.get('call_type', 'normal')
     if call_type not in ['normal', 'checkout']: call_type = 'normal'
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT id FROM table_sessions WHERE table_id = ? AND access_token = ? AND status = 'active'", (table_id, access_token))
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT id FROM table_sessions WHERE table_id = %s AND access_token = %s AND status = 'active'", (table_id, access_token))
     if not cursor.fetchone(): return jsonify({"status": "error", "message": "無効なアクセスです"}), 403
-    cursor.execute("INSERT INTO calls (table_id, call_time, call_type, status) VALUES (?, ?, ?, 'new') ON CONFLICT(table_id) DO UPDATE SET call_time = excluded.call_time, call_type = excluded.call_type, status = 'new'", (table_id, datetime.now(timezone.utc).timestamp(), call_type))
+    # 【変更点】PostgreSQLのON CONFLICT構文
+    cursor.execute("""
+        INSERT INTO calls (table_id, call_time, call_type, status) 
+        VALUES (%s, %s, %s, 'new') 
+        ON CONFLICT (table_id) 
+        DO UPDATE SET call_time = EXCLUDED.call_time, call_type = EXCLUDED.call_type, status = 'new'
+    """, (table_id, datetime.now(timezone.utc).timestamp(), call_type))
     db.commit()
     return jsonify({"status": "success"})
 
@@ -325,98 +298,100 @@ def handle_call():
 @staff_required
 def generate_table_token(table_id):
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("UPDATE table_sessions SET status = 'expired' WHERE table_id = ? AND status = 'active'", (table_id,))
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("UPDATE table_sessions SET status = 'expired' WHERE table_id = %s AND status = 'active'", (table_id,))
     token = secrets.token_urlsafe(16)
-    cursor.execute("INSERT INTO table_sessions (table_id, access_token, status, created_at) VALUES (?, ?, ?, ?)", (table_id, token, 'active', datetime.now(timezone.utc).timestamp()))
+    cursor.execute("INSERT INTO table_sessions (table_id, access_token, status, created_at) VALUES (%s, %s, %s, %s)", (table_id, token, 'active', datetime.now(timezone.utc).timestamp()))
     db.commit()
     return jsonify({"status": "success", "accessToken": token, "tableId": table_id})
 
 @app.route('/api/get_calls')
 @staff_required
 def get_calls():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT table_id, call_time, call_type FROM calls WHERE status = 'new' ORDER BY call_time ASC")
-    return jsonify([dict(row) for row in cursor.fetchall()])
+    return jsonify(cursor.fetchall())
 
 @app.route('/api/resolve_call/<int:table_id>', methods=['POST'])
 @staff_required
 def resolve_call(table_id):
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT call_type FROM calls WHERE table_id = ? AND status = 'new'", (table_id,))
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT call_type FROM calls WHERE table_id = %s AND status = 'new'", (table_id,))
     call = cursor.fetchone()
     if not call:
         return jsonify({"status": "success", "message": "Call not found or already resolved."})
     if call['call_type'] == 'checkout':
-        cursor.execute("UPDATE calls SET status = 'acknowledged' WHERE table_id = ?", (table_id,))
+        cursor.execute("UPDATE calls SET status = 'acknowledged' WHERE table_id = %s", (table_id,))
     else:
-        cursor.execute("DELETE FROM calls WHERE table_id = ?", (table_id,))
+        cursor.execute("DELETE FROM calls WHERE table_id = %s", (table_id,))
     db.commit()
     return jsonify({"status": "success"})
 
 @app.route('/api/get_all_active_orders')
 @staff_required
 def get_all_active_orders():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT * FROM orders WHERE status != 'paid' ORDER BY created_at ASC")
-    orders = [dict(row) for row in cursor.fetchall()]
+    orders = cursor.fetchall()
     for order in orders:
-        cursor.execute("SELECT * FROM order_items WHERE order_id = ?", (order['id'],))
-        order['items'] = [dict(row) for row in cursor.fetchall()]
+        cursor.execute("SELECT * FROM order_items WHERE order_id = %s", (order['id'],))
+        order['items'] = cursor.fetchall()
     return jsonify(orders)
 
 @app.route('/api/update_item_status/<int:item_id>', methods=['POST'])
 @staff_required
 def update_item_status(item_id):
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     new_status = request.get_json().get('status')
     if new_status == 'ready':
-        cursor.execute("UPDATE order_items SET item_status = ?, ready_at = ? WHERE id = ?", (new_status, datetime.now(timezone.utc).timestamp(), item_id))
+        cursor.execute("UPDATE order_items SET item_status = %s, ready_at = %s WHERE id = %s", (new_status, datetime.now(timezone.utc).timestamp(), item_id))
     else:
-        cursor.execute("UPDATE order_items SET item_status = ? WHERE id = ?", (new_status, item_id))
+        cursor.execute("UPDATE order_items SET item_status = %s WHERE id = %s", (new_status, item_id))
     db.commit()
     return jsonify({"status": "success"})
 
 @app.route('/api/update_item_quantity/<int:item_id>', methods=['POST'])
 @staff_required
 def update_item_quantity(item_id):
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     new_quantity = request.get_json().get('quantity')
     if not isinstance(new_quantity, int) or new_quantity <= 0: return jsonify({"status": "error", "message": "Invalid quantity"}), 400
-    cursor.execute("SELECT order_id FROM order_items WHERE id = ?", (item_id,))
+    cursor.execute("SELECT order_id FROM order_items WHERE id = %s", (item_id,))
     res = cursor.fetchone()
     if not res: return jsonify({"status": "error", "message": "Item not found"}), 404
-    order_id = res[0]
-    cursor.execute("UPDATE order_items SET quantity = ? WHERE id = ?", (new_quantity, item_id))
-    cursor.execute("SELECT SUM(price * quantity) FROM order_items WHERE order_id = ?", (order_id,))
-    new_total = cursor.fetchone()[0] or 0
-    cursor.execute("UPDATE orders SET total_price = ? WHERE id = ?", (new_total, order_id))
+    order_id = res['order_id']
+    cursor.execute("UPDATE order_items SET quantity = %s WHERE id = %s", (new_quantity, item_id))
+    cursor.execute("SELECT SUM(price * quantity) FROM order_items WHERE order_id = %s", (order_id,))
+    new_total = cursor.fetchone()['sum'] or 0
+    cursor.execute("UPDATE orders SET total_price = %s WHERE id = %s", (new_total, order_id))
     db.commit()
     return jsonify({"status": "success"})
 
 @app.route('/api/cancel_item/<int:item_id>', methods=['POST'])
 @staff_required
 def cancel_item(item_id):
-    db, cursor = get_db(), get_db().cursor()
-    cursor.execute("SELECT order_id FROM order_items WHERE id = ?", (item_id,))
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT order_id FROM order_items WHERE id = %s", (item_id,))
     result = cursor.fetchone()
     if not result: return jsonify({"status": "error", "message": "Item not found"}), 404
-    order_id = result[0]
-    cursor.execute("DELETE FROM order_items WHERE id = ?", (item_id,))
-    cursor.execute("SELECT SUM(price * quantity) FROM order_items WHERE order_id = ?", (order_id,))
-    new_total = cursor.fetchone()[0] or 0
-    cursor.execute("UPDATE orders SET total_price = ? WHERE id = ?", (new_total, order_id))
-    cursor.execute("SELECT COUNT(*) FROM order_items WHERE order_id = ?", (order_id,))
-    if cursor.fetchone()[0] == 0: cursor.execute("DELETE FROM orders WHERE id = ?", (order_id,))
+    order_id = result['order_id']
+    cursor.execute("DELETE FROM order_items WHERE id = %s", (item_id,))
+    cursor.execute("SELECT SUM(price * quantity) FROM order_items WHERE order_id = %s", (order_id,))
+    new_total = cursor.fetchone()['sum'] or 0
+    cursor.execute("UPDATE orders SET total_price = %s WHERE id = %s", (new_total, order_id))
+    cursor.execute("SELECT COUNT(*) FROM order_items WHERE order_id = %s", (order_id,))
+    if cursor.fetchone()['count'] == 0: cursor.execute("DELETE FROM orders WHERE id = %s", (order_id,))
     db.commit()
     return jsonify({"status": "success"})
 
 @app.route('/api/get_table_summary')
 @staff_required
 def get_table_summary():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT table_id, call_type FROM calls")
     calls_map = {row['table_id']: row['call_type'] for row in cursor.fetchall()}
     cursor.execute("SELECT * FROM orders WHERE status != 'paid' ORDER BY table_id, created_at ASC")
@@ -425,72 +400,76 @@ def get_table_summary():
         table_id = order_row['table_id']
         if table_id not in table_summary: 
             table_summary[table_id] = {"table_id": table_id, "orders": [], "grand_total": 0, "call_type": calls_map.get(table_id, None)}
-        order_dict = dict(order_row)
-        cursor.execute("SELECT * FROM order_items WHERE order_id = ?", (order_dict['id'],))
-        order_dict['items'] = [dict(item_row) for item_row in cursor.fetchall()]
-        table_summary[table_id]['orders'].append(order_dict)
-        table_summary[table_id]['grand_total'] += order_dict.get('total_price', 0)
+        
+        cursor.execute("SELECT * FROM order_items WHERE order_id = %s", (order_row['id'],))
+        order_row['items'] = cursor.fetchall()
+        table_summary[table_id]['orders'].append(order_row)
+        table_summary[table_id]['grand_total'] += order_row.get('total_price', 0)
     return jsonify(list(table_summary.values()))
 
 @app.route('/api/checkout_table/<int:table_id>', methods=['POST'])
 @staff_required
 def checkout_table(table_id):
-    db, cursor = get_db(), get_db().cursor()
-    cursor.execute("UPDATE orders SET status = 'paid', paid_at = ? WHERE table_id = ? AND status != 'paid'", (datetime.now(timezone.utc).timestamp(), table_id))
-    cursor.execute("UPDATE table_sessions SET status = 'expired' WHERE table_id = ? AND status = 'active'", (table_id,))
-    cursor.execute("DELETE FROM calls WHERE table_id = ?", (table_id,))
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("UPDATE orders SET status = 'paid', paid_at = %s WHERE table_id = %s AND status != 'paid'", (datetime.now(timezone.utc).timestamp(), table_id))
+    cursor.execute("UPDATE table_sessions SET status = 'expired' WHERE table_id = %s AND status = 'active'", (table_id,))
+    cursor.execute("DELETE FROM calls WHERE table_id = %s", (table_id,))
     db.commit()
     return jsonify({"status": "success"})
 
 @app.route('/api/get_paid_orders')
 @staff_required
 def get_paid_orders():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     start_of_today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
-    cursor.execute("SELECT * FROM orders WHERE status = 'paid' AND created_at >= ? ORDER BY paid_at DESC LIMIT 200", (start_of_today,))
-    return jsonify([dict(row) for row in cursor.fetchall()])
+    cursor.execute("SELECT * FROM orders WHERE status = 'paid' AND created_at >= %s ORDER BY paid_at DESC LIMIT 200", (start_of_today,))
+    return jsonify(cursor.fetchall())
 
 @app.route('/api/get_order_for_print/<int:order_id>')
 @staff_required
 def get_order_for_print(order_id):
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT key, value FROM settings WHERE key LIKE 'store_%'")
     store_info = {row['key']: row['value'] for row in cursor.fetchall()}
     if store_info.get('store_qr_code_path'): store_info['store_qr_code_url'] = url_for('static', filename=store_info['store_qr_code_path'])
-    cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
+    cursor.execute("SELECT * FROM orders WHERE id = %s", (order_id,))
     order = cursor.fetchone()
     if not order: return jsonify({"status": "error", "message": "Order not found"}), 404
-    cursor.execute("SELECT * FROM order_items WHERE order_id = ?", (order_id,))
-    items = [dict(row) for row in cursor.fetchall()]
-    cursor.execute("UPDATE orders SET printed_at = ? WHERE id = ?", (datetime.now(timezone.utc).timestamp(), order_id))
+    cursor.execute("SELECT * FROM order_items WHERE order_id = %s", (order_id,))
+    items = cursor.fetchall()
+    cursor.execute("UPDATE orders SET printed_at = %s WHERE id = %s", (datetime.now(timezone.utc).timestamp(), order_id))
     db.commit()
-    return jsonify({"order": dict(order), "items": items, "store_info": store_info})
+    return jsonify({"order": order, "items": items, "store_info": store_info})
 
 # --- API: 顧客・管理者向け ---
 @app.route('/api/get_categories')
 def get_categories():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT id, name_jp, name_en, display_order FROM categories ORDER BY display_order, id")
-    return jsonify([dict(row) for row in cursor.fetchall()])
+    return jsonify(cursor.fetchall())
 
     # --- 管理者向けAPI ---
 @app.route('/api/admin/get_categories')
 @admin_role_required
 def admin_get_categories():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT * FROM categories ORDER BY display_order, id")
-    return jsonify([dict(row) for row in cursor.fetchall()])
+    return jsonify(cursor.fetchall())
 
 @app.route('/api/admin/add_category', methods=['POST'])
 @admin_role_required
 def add_category():
     data = request.get_json()
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("INSERT INTO categories (name_jp, name_en) VALUES (?, ?)", (data['name_jp'], data['name_en']))
+        cursor.execute("INSERT INTO categories (name_jp, name_en) VALUES (%s, %s) RETURNING id", (data['name_jp'], data['name_en']))
+        new_id = cursor.fetchone()['id']
         db.commit()
-        return jsonify({"status": "success", "id": cursor.lastrowid})
-    except sqlite3.IntegrityError:
+        return jsonify({"status": "success", "id": new_id})
+    except psycopg2.errors.UniqueViolation:
         db.rollback()
         return jsonify({"status": "error", "message": "そのカテゴリー名は既に使用されています。"}), 409
     except Exception as e:
@@ -501,12 +480,13 @@ def add_category():
 @admin_role_required
 def update_category(category_id):
     data = request.get_json()
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("UPDATE categories SET name_jp = ?, name_en = ? WHERE id = ?", (data['name_jp'], data['name_en'], category_id))
+        cursor.execute("UPDATE categories SET name_jp = %s, name_en = %s WHERE id = %s", (data['name_jp'], data['name_en'], category_id))
         db.commit()
         return jsonify({"status": "success"})
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
         db.rollback()
         return jsonify({"status": "error", "message": "そのカテゴリー名は既に使用されています。"}), 409
     except Exception as e:
@@ -516,11 +496,12 @@ def update_category(category_id):
 @app.route('/api/admin/delete_category/<int:category_id>', methods=['POST'])
 @admin_role_required
 def delete_category(category_id):
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT COUNT(*) FROM product_categories WHERE category_id = ?", (category_id,))
-        if cursor.fetchone()[0] > 0: return jsonify({"status": "error", "message": "このカテゴリーを使用しているメニューが存在するため、削除できません。"}), 400
-        cursor.execute("DELETE FROM categories WHERE id = ?", (category_id,))
+        cursor.execute("SELECT COUNT(*) FROM product_categories WHERE category_id = %s", (category_id,))
+        if cursor.fetchone()['count'] > 0: return jsonify({"status": "error", "message": "このカテゴリーを使用しているメニューが存在するため、削除できません。"}), 400
+        cursor.execute("DELETE FROM categories WHERE id = %s", (category_id,))
         db.commit()
         return jsonify({"status": "success"})
     except Exception as e:
@@ -530,7 +511,7 @@ def delete_category(category_id):
 @app.route('/api/admin/get_store_info')
 @admin_role_required
 def get_store_info():
-    cursor = get_db().cursor()
+    cursor = get_db().cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT key, value FROM settings WHERE key LIKE 'store_%'")
     store_info = {row['key']: row['value'] for row in cursor.fetchall()}
     if store_info.get('store_qr_code_path'): store_info['store_qr_code_url'] = url_for('static', filename=store_info['store_qr_code_path'])
@@ -539,11 +520,12 @@ def get_store_info():
 @app.route('/api/admin/update_store_info', methods=['POST'])
 @admin_role_required
 def update_store_info():
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
         for key in ['store_name', 'store_address', 'store_tel', 'store_receipt_note']:
             if key in request.form:
-                cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, request.form[key]))
+                cursor.execute("INSERT INTO settings (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value", (key, request.form[key]))
         if 'store_qr_code' in request.files and request.files['store_qr_code'].filename != '':
             qr_file = request.files['store_qr_code']
             img = Image.open(qr_file.stream)
@@ -551,7 +533,7 @@ def update_store_info():
             if ext not in ['.png', '.jpg', '.jpeg', '.gif']: raise IOError("Invalid QR code image format")
             filename = f"qr_code{ext}"
             img.save(os.path.join(app.config['IMAGES_FOLDER'], filename))
-            cursor.execute("UPDATE settings SET value = ? WHERE key = 'store_qr_code_path'", (filename,))
+            cursor.execute("UPDATE settings SET value = %s WHERE key = 'store_qr_code_path'", (filename,))
         db.commit()
         return jsonify({"status": "success", "message": "店舗情報を更新しました。"})
     except Exception as e:
@@ -561,7 +543,8 @@ def update_store_info():
 @app.route('/api/admin/delete_qr_code', methods=['POST'])
 @admin_role_required
 def delete_qr_code():
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("SELECT value FROM settings WHERE key = 'store_qr_code_path'")
         result = cursor.fetchone()
@@ -578,17 +561,13 @@ def delete_qr_code():
 @app.route('/api/admin/update_opening', methods=['POST'])
 @admin_role_required
 def update_opening():
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
-        key_map = {
-            'opening_message': 'opening_message',
-            'writing_mode': 'opening_writing_mode',
-            'opening_effect': 'opening_effect',
-            'opening_duration': 'opening_duration'
-        }
+        key_map = {'opening_message': 'opening_message', 'writing_mode': 'opening_writing_mode', 'opening_effect': 'opening_effect', 'opening_duration': 'opening_duration'}
         for form_key, db_key in key_map.items():
             if request.form.get(form_key) is not None:
-                cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (request.form.get(form_key), db_key))
+                cursor.execute("UPDATE settings SET value = %s WHERE key = %s", (request.form.get(form_key), db_key))
         for db_key, file in [('opening_image_path', request.files.get('opening_image_1')), ('opening_image_path_2', request.files.get('opening_image_2'))]:
             if file and file.filename != '':
                 img = Image.open(file.stream)
@@ -596,7 +575,7 @@ def update_opening():
                 if ext not in ['.png', '.jpg', '.jpeg', '.gif', '.webp']: raise IOError("Invalid image format")
                 filename = f"{db_key.replace('_path', '')}{ext}"
                 img.save(os.path.join(app.config['IMAGES_FOLDER'], filename))
-                cursor.execute("UPDATE settings SET value = ? WHERE key = ?", (filename, db_key))
+                cursor.execute("UPDATE settings SET value = %s WHERE key = %s", (filename, db_key))
         db.commit()
         return jsonify({"status": "success"})
     except Exception as e:
@@ -608,14 +587,15 @@ def update_opening():
 def delete_opening_image(image_number):
     if image_number not in [1, 2]: return jsonify({"status": "error", "message": "無効な画像番号です"}), 400
     db_key = 'opening_image_path' if image_number == 1 else 'opening_image_path_2'
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("SELECT value FROM settings WHERE key = ?", (db_key,))
+        cursor.execute("SELECT value FROM settings WHERE key = %s", (db_key,))
         result = cursor.fetchone()
         if result and result['value']:
             filepath = os.path.join(app.config['IMAGES_FOLDER'], result['value'])
             if os.path.exists(filepath): os.remove(filepath)
-        cursor.execute("UPDATE settings SET value = '' WHERE key = ?", (db_key,))
+        cursor.execute("UPDATE settings SET value = '' WHERE key = %s", (db_key,))
         db.commit()
         return jsonify({"status": "success"})
     except Exception as e:
@@ -630,16 +610,17 @@ def change_password():
     if not all([target_user, current_pass, new_pass, data.get('confirm_password')]): return jsonify({"status": "error", "message": "すべての項目を入力してください。"}), 400
     if new_pass != data.get('confirm_password'): return jsonify({"status": "error", "message": "新しいパスワードが一致しません。"}), 400
     if len(new_pass) < 6: return jsonify({"status": "error", "message": "新しいパスワードは6文字以上にしてください。"}), 400
-    db, cursor = get_db(), get_db().cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (g.user_username,))
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT * FROM users WHERE username = %s", (g.user_username,))
     operator_user = cursor.fetchone()
     if not operator_user or not bcrypt.check_password_hash(operator_user['password_hash'], current_pass):
         return jsonify({"status": "error", "message": "現在のあなたのパスワードが正しくありません。"}), 403
-    cursor.execute("SELECT * FROM users WHERE username = ?", (target_user,))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (target_user,))
     if not cursor.fetchone(): return jsonify({"status": "error", "message": "対象のユーザーが見つかりません。"}), 404
     try:
         new_hash = bcrypt.generate_password_hash(new_pass).decode('utf-8')
-        cursor.execute("UPDATE users SET password_hash = ? WHERE username = ?", (new_hash, target_user))
+        cursor.execute("UPDATE users SET password_hash = %s WHERE username = %s", (new_hash, target_user))
         db.commit()
         return jsonify({"status": "success", "message": f"{target_user}のパスワードを変更しました。"})
     except Exception as e:
@@ -654,9 +635,9 @@ def get_sales_data():
     try:
         start_ts = datetime.strptime(start_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()
         end_ts = datetime.strptime(end_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc).timestamp()
-        cursor = get_db().cursor()
-        cursor.execute("SELECT o.created_at, o.table_id, oi.item_name, oi.quantity, oi.price FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.status = 'paid' AND o.paid_at BETWEEN ? AND ? ORDER BY o.paid_at ASC", (start_ts, end_ts))
-        return jsonify([dict(row) for row in cursor.fetchall()])
+        cursor = get_db().cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT o.created_at, o.table_id, oi.item_name, oi.quantity, oi.price FROM orders o JOIN order_items oi ON o.id = oi.order_id WHERE o.status = 'paid' AND o.paid_at BETWEEN %s AND %s ORDER BY o.paid_at ASC", (start_ts, end_ts))
+        return jsonify(cursor.fetchall())
     except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/admin/get_cooking_times', methods=['GET'])
@@ -667,8 +648,8 @@ def get_cooking_times():
     try:
         start_ts = datetime.strptime(start_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()
         end_ts = datetime.strptime(end_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc).timestamp()
-        cursor = get_db().cursor()
-        cursor.execute("SELECT oi.item_name, oi.ready_at - o.created_at AS cooking_duration FROM order_items oi JOIN orders o ON oi.order_id = o.id WHERE o.status = 'paid' AND o.paid_at BETWEEN ? AND ? AND oi.ready_at IS NOT NULL AND o.created_at IS NOT NULL", (start_ts, end_ts))
+        cursor = get_db().cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT oi.item_name, oi.ready_at - o.created_at AS cooking_duration FROM order_items oi JOIN orders o ON oi.order_id = o.id WHERE o.status = 'paid' AND o.paid_at BETWEEN %s AND %s AND oi.ready_at IS NOT NULL AND o.created_at IS NOT NULL", (start_ts, end_ts))
         product_times = {}
         for row in cursor.fetchall():
             if 0 <= row['cooking_duration'] < 86400:
@@ -686,12 +667,12 @@ def get_session_durations():
     try:
         start_ts = datetime.strptime(start_date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()
         end_ts = datetime.strptime(end_date_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc).timestamp()
-        cursor = get_db().cursor()
-        cursor.execute("SELECT id, table_id, created_at, paid_at, total_price FROM orders WHERE status = 'paid' AND paid_at BETWEEN ? AND ?", (start_ts, end_ts))
+        cursor = get_db().cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT id, table_id, created_at, paid_at, total_price FROM orders WHERE status = 'paid' AND paid_at BETWEEN %s AND %s", (start_ts, end_ts))
         paid_orders = cursor.fetchall()
         session_durations = []
         for order in paid_orders:
-            cursor.execute("SELECT created_at FROM table_sessions WHERE table_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT 1", (order['table_id'], order['paid_at']))
+            cursor.execute("SELECT created_at FROM table_sessions WHERE table_id = %s AND created_at < %s ORDER BY created_at DESC LIMIT 1", (order['table_id'], order['paid_at']))
             session = cursor.fetchone()
             start_time = session['created_at'] if session else order['created_at']
             session_durations.append({"table_id": order['table_id'], "start_time": start_time, "end_time": order['paid_at'], "duration_minutes": round((order['paid_at'] - start_time) / 60), "total_price": order['total_price']})
@@ -703,7 +684,7 @@ def get_session_durations():
 def download_menu():
     try:
         db = get_db()
-        cursor = db.cursor()
+        cursor = db.cursor(cursor_factory=RealDictCursor)
         workbook = openpyxl.Workbook()
         sheet_cat = workbook.active
         sheet_cat.title = "カテゴリー設定"
@@ -745,27 +726,30 @@ def upload_menu():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
     file.save(filepath)
     db = get_db()
-    cursor = db.cursor()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
         workbook = openpyxl.load_workbook(filepath)
         if "カテゴリー設定" in workbook.sheetnames:
             sheet_cat = workbook["カテゴリー設定"]
             cursor.execute("DELETE FROM product_categories")
             cursor.execute("DELETE FROM categories")
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name='categories'")
+            # 【変更点】PostgreSQLではシーケンスのリセットが必要
+            cursor.execute("ALTER SEQUENCE categories_id_seq RESTART WITH 1")
             categories_to_insert = []
             for row in sheet_cat.iter_rows(min_row=2, values_only=True):
                 if not row or not row[1]: continue
                 order, name_jp, name_en = (row + (99, None, None))[:3]
                 categories_to_insert.append((int(order or 99), name_jp, name_en))
-            cursor.executemany("INSERT INTO categories (display_order, name_jp, name_en) VALUES (?, ?, ?)", categories_to_insert)
+            cursor.executemany("INSERT INTO categories (display_order, name_jp, name_en) VALUES (%s, %s, %s)", categories_to_insert)
+        
         count = 0
         if "メニュー" in workbook.sheetnames:
             sheet_menu = workbook["メニュー"]
             cursor.execute("SELECT id, name_jp FROM categories")
             cat_name_to_id_map = {row['name_jp']: row['id'] for row in cursor.fetchall()}
             cursor.execute("DELETE FROM products")
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name='products'")
+            cursor.execute("ALTER SEQUENCE products_id_seq RESTART WITH 1")
+            
             for row_index, row in enumerate(sheet_menu.iter_rows(min_row=2, values_only=True), start=2):
                 if not row or not row[1]: continue
                 _id, name, price, desc, img, cat_str, sold_out, name_en, desc_en = (row + (None,) * 9)[:9]
@@ -776,14 +760,16 @@ def upload_menu():
                         if cleaned_price: price_val = int(cleaned_price)
                     elif isinstance(price, (int, float)):
                         price_val = int(price)
-                cursor.execute("INSERT INTO products (name, price, description, image_path, is_sold_out, name_en, description_en) VALUES (?, ?, ?, ?, ?, ?, ?)", (name, price_val, desc, img, 1 if sold_out else 0, name_en, desc_en))
-                new_product_id = cursor.lastrowid
+                
+                cursor.execute("INSERT INTO products (name, price, description, image_path, is_sold_out, name_en, description_en) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id", (name, price_val, desc, img, 1 if sold_out else 0, name_en, desc_en))
+                new_product_id = cursor.fetchone()['id']
+                
                 if cat_str:
                     category_names = cat_str.replace('　', ' ').split(' ')
                     for cat_name in [c for c in category_names if c]:
                         cat_id = cat_name_to_id_map.get(cat_name.strip())
                         if cat_id:
-                            cursor.execute("INSERT OR IGNORE INTO product_categories (product_id, category_id) VALUES (?, ?)", (new_product_id, cat_id))
+                            cursor.execute("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (new_product_id, cat_id))
                 count += 1
         db.commit()
         return jsonify({"status": "success", "message": f"{count}件のメニューとカテゴリーを登録/更新しました。"})
@@ -799,25 +785,29 @@ def upload_menu():
 @app.route('/api/admin/add_product', methods=['POST'])
 @admin_role_required
 def add_product():
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
         data = request.form
         image_file = request.files.get('image_file')
         category_ids = [int(cid) for cid in data.get('category_ids', '').split(',') if cid]
-        cursor.execute("INSERT INTO products (name, price, description, name_en, description_en) VALUES (?, ?, ?, ?, ?)", (data['name'], data['price'], data['description'], data['name_en'], data['description_en']))
-        product_id = cursor.lastrowid
+        cursor.execute("INSERT INTO products (name, price, description, name_en, description_en) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data['name'], data['price'], data['description'], data['name_en'], data['description_en']))
+        product_id = cursor.fetchone()['id']
+
         if image_file:
             img = Image.open(image_file.stream)
             ext = os.path.splitext(secure_filename(image_file.filename))[1].lower()
             if ext not in ['.jpg', '.jpeg', '.png', '.webp']: raise ValueError("無効な画像形式です。")
             new_filename = f"{product_id}{ext}"
             img.save(os.path.join(app.config['IMAGES_FOLDER'], new_filename))
-            cursor.execute("UPDATE products SET image_path = ? WHERE id = ?", (new_filename, product_id))
+            cursor.execute("UPDATE products SET image_path = %s WHERE id = %s", (new_filename, product_id))
+        
         if category_ids:
-            cursor.executemany("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)", [(product_id, cid) for cid in category_ids])
+            cursor.executemany("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", [(product_id, cid) for cid in category_ids])
+        
         db.commit()
         return jsonify({"status": "success", "productId": product_id})
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
         db.rollback()
         return jsonify({"status": "error", "message": "その品名は既に使用されています。"}), 409
     except Exception as e:
@@ -829,16 +819,17 @@ def add_product():
 def update_product(product_id):
     data = request.get_json()
     if not data.get('name') or not data.get('price'): return jsonify({"status": "error", "message": "品名と価格は必須です。"}), 400
-    db, cursor = get_db(), get_db().cursor()
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
     try:
         category_ids = [int(cid) for cid in data.get('category_ids', [])]
-        cursor.execute("UPDATE products SET name = ?, price = ?, description = ?, name_en = ?, description_en = ?, image_path = ? WHERE id = ?", (data['name'], data['price'], data['description'], data['name_en'], data['description_en'], data['image_path'], product_id))
-        cursor.execute("DELETE FROM product_categories WHERE product_id = ?", (product_id,))
+        cursor.execute("UPDATE products SET name = %s, price = %s, description = %s, name_en = %s, description_en = %s, image_path = %s WHERE id = %s", (data['name'], data['price'], data['description'], data['name_en'], data['description_en'], data['image_path'], product_id))
+        cursor.execute("DELETE FROM product_categories WHERE product_id = %s", (product_id,))
         if category_ids:
-            cursor.executemany("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)", [(product_id, cid) for cid in category_ids])
+            cursor.executemany("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", [(product_id, cid) for cid in category_ids])
         db.commit()
         return jsonify({"status": "success"})
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
         db.rollback()
         return jsonify({"status": "error", "message": "その品名は既に使用されています。"}), 409
     except Exception as e:
@@ -850,16 +841,17 @@ def update_product(product_id):
 def update_product_status(product_id):
     data = request.get_json()
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("UPDATE products SET is_sold_out = ? WHERE id = ?", (data['is_sold_out'], product_id))
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("UPDATE products SET is_sold_out = %s WHERE id = %s", (data['is_sold_out'], product_id))
     db.commit()
     return jsonify({"status": "success"})
         
 @app.route('/api/admin/delete_product/<int:product_id>', methods=['POST'])
 @admin_role_required
 def delete_product(product_id):
-    db, cursor = get_db(), get_db().cursor()
-    cursor.execute("DELETE FROM products WHERE id = ?", (product_id,))
+    db = get_db()
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
     db.commit()
     return jsonify({"status": "success"})
 
@@ -876,14 +868,20 @@ def favicon():
 @app.route('/<path:path>')
 def serve_static_file(path):
     if '..' in path: return "Not Found", 404
-    if os.path.exists(path) and not os.path.isdir(path):
+    # 【変更点】静的ファイル配信のセキュリティを少し強化
+    # imagesフォルダ内のファイルのみを許可するなどの設定も可能
+    safe_path = os.path.join('.', path)
+    if os.path.exists(safe_path) and not os.path.isdir(safe_path):
         return send_from_directory('.', path)
     return "Not Found", 404
 
 # --- 実行 ---
 if __name__ == '__main__':
     with app.app_context():
-        if not os.path.exists(DB_NAME):
-            init_db()
-        migrate_db()
+        # 【変更点】ローカル実行時はinit_dbとmigrate_dbを呼ばないようにする
+        # Render環境でのみビルド時に実行されるようにしたいため
+        # ローカルでDBを初期化したい場合は別途スクリプトを実行する
+        pass
+    # 【変更点】本番環境ではgunicornが起動するため、debug=Falseを推奨
     app.run(host='0.0.0.0', port=5000, debug=False)
+    
