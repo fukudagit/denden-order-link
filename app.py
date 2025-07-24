@@ -877,6 +877,19 @@ def serve_static_file(path):
 
 # --- 実行 ---
 if __name__ == '__main__':
+    # --- ここから追記 ---
+@app.cli.command("init-db")
+def init_db_command():
+    """データベーステーブルを作成します。"""
+    init_db()
+    # migrate_db() # 初回作成時は不要な場合が多いので一旦コメントアウト
+    print("Initialized the database.")
+# --- ここまで追記 ---
+
+# --- 実行 ---
+if __name__ == '__main__':
+    # ... 既存のコードはそのまま ...
+    
     with app.app_context():
         # 【変更点】ローカル実行時はinit_dbとmigrate_dbを呼ばないようにする
         # Render環境でのみビルド時に実行されるようにしたいため
@@ -884,4 +897,3 @@ if __name__ == '__main__':
         pass
     # 【変更点】本番環境ではgunicornが起動するため、debug=Falseを推奨
     app.run(host='0.0.0.0', port=5000, debug=False)
-    
