@@ -1,3 +1,5 @@
+// admin.js (修正済み・全体)
+
 document.addEventListener('DOMContentLoaded', () => {
     const STAFF_TOKEN = localStorage.getItem('staff_token');
     if (!STAFF_TOKEN) {
@@ -6,12 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const API_BASE_URL = 'http://127.0.0.1:5000/api';
+    // ★★★ ここを本番環境のURLに修正しました ★★★
+    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
     
-    // ▼▼▼ 変更点: admin-category-tabsのセレクタを追加 ▼▼▼
     const adminCategoryTabs = document.getElementById('admin-category-tabs');
     const productsTableBody = document.querySelector('#products-table tbody');
-    // ▲▲▲ 変更ここまで ▲▲▲
     const uploadBtn = document.getElementById('upload-btn');
     const menuFileInput = document.getElementById('menu-file-input');
     const addProductForm = document.getElementById('add-product-form');
@@ -102,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.insertCell().innerHTML = `<button class="action-btn edit-btn" data-id="${cat.id}">修正</button><button class="delete-btn" data-id="${cat.id}" title="削除">🗑️</button>`;
             });
             updateCategoryCheckboxes();
-            renderAdminCategoryTabs(); // ▼▼▼ 追加: カテゴリータブを描画
+            renderAdminCategoryTabs();
         } catch (error) {
             if (error.message !== '認証エラー') {
                alert(`カテゴリーの読み込みに失敗: ${error.message}`);
@@ -110,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ▼▼▼ 追加: 管理者画面用のカテゴリータブを描画する関数 ▼▼▼
     function renderAdminCategoryTabs() {
         adminCategoryTabs.innerHTML = '';
         const allBtn = document.createElement('button');
@@ -127,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ▼▼▼ 追加: 管理者画面の商品リストをカテゴリーで絞り込む関数 ▼▼▼
     function filterAdminProductsByCategory(selectedCategoryId) {
         productsTableBody.querySelectorAll('tr').forEach(tr => {
             if (selectedCategoryId === 'all') {
@@ -138,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // ▲▲▲ 追加ここまで ▲▲▲
 
     function updateCategoryCheckboxes() {
         const createCheckbox = (cat, formName) => `
@@ -170,15 +168,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadProducts() {
         try {
-            const response = await fetch(`${API_BASE_URL}/get_products`);
+            // ★★★ ここは認証不要なAPIなのでAPI_BASE_URLを直接使わない ★★★
+            const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/get_products`);
             allProducts = await response.json();
             productsTableBody.innerHTML = '';
             allProducts.forEach(product => {
                 const tr = productsTableBody.insertRow();
                 tr.dataset.productId = product.id;
-                // ▼▼▼ 変更点: 絞り込み用にカテゴリーIDをdata属性に保存 ▼▼▼
                 tr.dataset.categoryIds = (product.categories || []).map(c => c.id).join(',');
-                // ▲▲▲ 変更ここまで ▲▲▲
                 tr.insertCell().textContent = product.id;
                 tr.insertCell().textContent = product.name;
                 tr.insertCell().textContent = product.price.toLocaleString();
@@ -192,76 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const actionCell = tr.insertCell();
                 actionCell.innerHTML = `<button class="action-btn edit-btn" data-id="${product.id}">修正</button><button class="delete-btn" data-id="${product.id}" title="削除">🗑️</button>`;
             });
-            // ページ読み込み時は「すべて」を選択した状態にする
             filterAdminProductsByCategory('all');
         } catch (error) {
             console.error('メニューの読み込みに失敗:', error);
         }
     }
     
-    // (openEditModal, closeEditModal, loadOpeningSettings, loadStoreInfo, renderSalesData, updateSortButtons は変更なし)
-    // ...
-
-    // --- イベントリスナー設定 ---
-    
-    // ▼▼▼ 追加: 管理者画面のカテゴリータブのクリックイベント ▼▼▼
-    adminCategoryTabs.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            const selectedCategoryId = e.target.dataset.categoryId;
-            
-            // activeクラスの切り替え
-            adminCategoryTabs.querySelector('.active').classList.remove('active');
-            e.target.classList.add('active');
-            
-            filterAdminProductsByCategory(selectedCategoryId);
-        }
-    });
-    // ▲▲▲ 追加ここまで ▲▲▲
-    
-    // (他のイベントリスナーは変更なし)
-    // ...
-
-    // 初期化処理
-    async function init() {
-        await loadCategories(); // カテゴリーを先に読み込む (タブ描画のため)
-        await loadProducts();
-        await loadOpeningSettings();
-        await loadStoreInfo();
-    }
-    
-    init();
-
-    // (省略: 変更のない関数の完全なコード)
-    function openEditModal(productId) {
-        const productToEdit = allProducts.find(p => p.id === productId);
-        if (!productToEdit) return;
-        editIdInput.value = productToEdit.id;
-        document.getElementById('edit-name').value = productToEdit.name;
-        document.getElementById('edit-price').value = productToEdit.price;
-        document.getElementById('edit-description').value = productToEdit.description || '';
-        document.getElementById('edit-image').value = productToEdit.image_path || '';
-        document.getElementById('edit-name-en').value = productToEdit.name_en || '';
-        document.getElementById('edit-description-en').value = productToEdit.description_en || '';
-
-        const productCategoryIds = new Set((productToEdit.categories || []).map(c => c.id));
-        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = productCategoryIds.has(parseInt(checkbox.value, 10));
-        });
-
-        editModalOverlay.classList.remove('hidden');
-    }
-
-    function closeEditModal() {
-        editModalOverlay.classList.add('hidden');
-        editForm.reset();
-        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-    }
-    
     async function loadOpeningSettings() {
         try {
-            const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
+            // ★★★ ここも認証不要なAPI ★★★
+            const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/get_opening_settings`);
             const settings = await response.json();
             openingMessageInput.value = settings.opening_message || '';
             document.querySelector(`input[name="writing_mode"][value="${settings.opening_writing_mode || 'horizontal-tb'}"]`).checked = true;
@@ -295,6 +232,75 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteQrCodeBtn.classList.add('hidden');
             }
         } catch (error) { console.error('店舗情報読み込みエラー:', error); }
+    }
+
+    // --- 省略: renderSalesData, updateSortButtons, openEditModal, closeEditModal などの変更のない関数 ---
+
+    adminCategoryTabs.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const selectedCategoryId = e.target.dataset.categoryId;
+            adminCategoryTabs.querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+            filterAdminProductsByCategory(selectedCategoryId);
+        }
+    });
+    
+    uploadBtn.addEventListener('click', async () => {
+        const file = menuFileInput.files[0];
+        if (!file) return alert('ファイルを選択してください。');
+        if (!confirm('本当にアップロードしますか？既存のカテゴリーとメニューは全て上書きされます。')) return;
+        const formData = new FormData();
+        formData.append('menu_file', file);
+        try {
+            const response = await authenticatedAPIFetch(`${API_BASE_URL}/admin/upload_menu`, { method: 'POST', body: formData });
+            const result = await response.json();
+            alert(result.message);
+            init();
+            menuFileInput.value = '';
+        } catch (error) {
+            alert(`アップロードに失敗: ${error.message}`);
+        }
+    });
+    
+    // --- 省略: 他のイベントリスナー ---
+    
+    // 初期化処理
+    async function init() {
+        await loadCategories();
+        await loadProducts();
+        await loadOpeningSettings();
+        await loadStoreInfo();
+    }
+    
+    init();
+    
+    // --- ここから下に、変更のなかった他の関数やイベントリスナーのコードが続きます ---
+    // (完全を期すため、元のファイルの残りの部分をここに貼り付けます)
+    function openEditModal(productId) {
+        const productToEdit = allProducts.find(p => p.id === productId);
+        if (!productToEdit) return;
+        editIdInput.value = productToEdit.id;
+        document.getElementById('edit-name').value = productToEdit.name;
+        document.getElementById('edit-price').value = productToEdit.price;
+        document.getElementById('edit-description').value = productToEdit.description || '';
+        document.getElementById('edit-image').value = productToEdit.image_path || '';
+        document.getElementById('edit-name-en').value = productToEdit.name_en || '';
+        document.getElementById('edit-description-en').value = productToEdit.description_en || '';
+
+        const productCategoryIds = new Set((productToEdit.categories || []).map(c => c.id));
+        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = productCategoryIds.has(parseInt(checkbox.value, 10));
+        });
+
+        editModalOverlay.classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        editModalOverlay.classList.add('hidden');
+        editForm.reset();
+        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
     }
     
     function renderSalesData() {
@@ -514,22 +520,6 @@ document.addEventListener('DOMContentLoaded', () => {
             a.remove();
         } catch (error) {
             alert(`ダウンロードに失敗: ${error.message}`);
-        }
-    });
-    uploadBtn.addEventListener('click', async () => {
-        const file = menuFileInput.files[0];
-        if (!file) return alert('ファイルを選択してください。');
-        if (!confirm('本当にアップロードしますか？既存のカテゴリーとメニューは全て上書きされます。')) return;
-        const formData = new FormData();
-        formData.append('menu_file', file);
-        try {
-            const response = await authenticatedAPIFetch(`${API_BASE_URL}/admin/upload_menu`, { method: 'POST', body: formData });
-            const result = await response.json();
-            alert(result.message);
-            init();
-            menuFileInput.value = '';
-        } catch (error) {
-            alert(`アップロードに失敗: ${error.message}`);
         }
     });
     fetchSalesBtn.addEventListener('click', async () => {
