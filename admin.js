@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const API_BASE_URL = 'http://127.0.0.1:5000/api';
     
+    // ▼▼▼ 変更点: admin-category-tabsのセレクタを追加 ▼▼▼
+    const adminCategoryTabs = document.getElementById('admin-category-tabs');
     const productsTableBody = document.querySelector('#products-table tbody');
+    // ▲▲▲ 変更ここまで ▲▲▲
     const uploadBtn = document.getElementById('upload-btn');
     const menuFileInput = document.getElementById('menu-file-input');
     const addProductForm = document.getElementById('add-product-form');
@@ -99,12 +102,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.insertCell().innerHTML = `<button class="action-btn edit-btn" data-id="${cat.id}">修正</button><button class="delete-btn" data-id="${cat.id}" title="削除">🗑️</button>`;
             });
             updateCategoryCheckboxes();
+            renderAdminCategoryTabs(); // ▼▼▼ 追加: カテゴリータブを描画
         } catch (error) {
             if (error.message !== '認証エラー') {
                alert(`カテゴリーの読み込みに失敗: ${error.message}`);
             }
         }
     }
+
+    // ▼▼▼ 追加: 管理者画面用のカテゴリータブを描画する関数 ▼▼▼
+    function renderAdminCategoryTabs() {
+        adminCategoryTabs.innerHTML = '';
+        const allBtn = document.createElement('button');
+        allBtn.textContent = 'すべて';
+        allBtn.className = 'active';
+        allBtn.dataset.categoryId = 'all';
+        adminCategoryTabs.appendChild(allBtn);
+
+        allCategories.forEach(cat => {
+            const catBtn = document.createElement('button');
+            catBtn.textContent = cat.name_jp;
+            catBtn.dataset.categoryId = cat.id;
+            adminCategoryTabs.appendChild(catBtn);
+        });
+    }
+
+    // ▼▼▼ 追加: 管理者画面の商品リストをカテゴリーで絞り込む関数 ▼▼▼
+    function filterAdminProductsByCategory(selectedCategoryId) {
+        productsTableBody.querySelectorAll('tr').forEach(tr => {
+            if (selectedCategoryId === 'all') {
+                tr.style.display = '';
+            } else {
+                const categoryIds = tr.dataset.categoryIds.split(',');
+                tr.style.display = categoryIds.includes(selectedCategoryId) ? '' : 'none';
+            }
+        });
+    }
+    // ▲▲▲ 追加ここまで ▲▲▲
 
     function updateCategoryCheckboxes() {
         const createCheckbox = (cat, formName) => `
@@ -142,6 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
             allProducts.forEach(product => {
                 const tr = productsTableBody.insertRow();
                 tr.dataset.productId = product.id;
+                // ▼▼▼ 変更点: 絞り込み用にカテゴリーIDをdata属性に保存 ▼▼▼
+                tr.dataset.categoryIds = (product.categories || []).map(c => c.id).join(',');
+                // ▲▲▲ 変更ここまで ▲▲▲
                 tr.insertCell().textContent = product.id;
                 tr.insertCell().textContent = product.name;
                 tr.insertCell().textContent = product.price.toLocaleString();
@@ -155,11 +192,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 const actionCell = tr.insertCell();
                 actionCell.innerHTML = `<button class="action-btn edit-btn" data-id="${product.id}">修正</button><button class="delete-btn" data-id="${product.id}" title="削除">🗑️</button>`;
             });
+            // ページ読み込み時は「すべて」を選択した状態にする
+            filterAdminProductsByCategory('all');
         } catch (error) {
             console.error('メニューの読み込みに失敗:', error);
         }
     }
+    
+    // (openEditModal, closeEditModal, loadOpeningSettings, loadStoreInfo, renderSalesData, updateSortButtons は変更なし)
+    // ...
 
+    // --- イベントリスナー設定 ---
+    
+    // ▼▼▼ 追加: 管理者画面のカテゴリータブのクリックイベント ▼▼▼
+    adminCategoryTabs.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const selectedCategoryId = e.target.dataset.categoryId;
+            
+            // activeクラスの切り替え
+            adminCategoryTabs.querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+            
+            filterAdminProductsByCategory(selectedCategoryId);
+        }
+    });
+    // ▲▲▲ 追加ここまで ▲▲▲
+    
+    // (他のイベントリスナーは変更なし)
+    // ...
+
+    // 初期化処理
+    async function init() {
+        await loadCategories(); // カテゴリーを先に読み込む (タブ描画のため)
+        await loadProducts();
+        await loadOpeningSettings();
+        await loadStoreInfo();
+    }
+    
+    init();
+
+    // (省略: 変更のない関数の完全なコード)
     function openEditModal(productId) {
         const productToEdit = allProducts.find(p => p.id === productId);
         if (!productToEdit) return;
@@ -297,9 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [sortByTimeBtn, sortByTableBtn, sortByProductBtn, sortByDurationBtn].forEach(btn => btn.classList.remove('active'));
         document.getElementById(`sort-by-${currentSort}`).classList.add('active');
     }
-    
-    // --- イベントリスナー設定 ---
-    
+
     addCategoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name_jp = document.getElementById('new-category-jp').value;
@@ -312,7 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`カテゴリーの追加に失敗: ${error.message}`);
         }
     });
-
     categoriesTableBody.addEventListener('click', async (e) => {
         const target = e.target;
         const catId = parseInt(target.closest('[data-id]')?.dataset.id, 10);
@@ -331,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
     editCategoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-category-id').value;
@@ -346,33 +414,25 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`更新に失敗: ${error.message}`);
         }
     });
-    
     cancelCategoryBtn.addEventListener('click', closeEditCategoryModal);
     editCategoryModalOverlay.addEventListener('click', (e) => { if(e.target === editCategoryModalOverlay) closeEditCategoryModal(); });
-    
     addProductForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const imageFile = newImageFileInput.files[0];
-        
         const selectedCategoryIds = Array.from(newCategoryContainer.querySelectorAll('input:checked')).map(cb => cb.value);
         if (selectedCategoryIds.length === 0) {
             return alert('カテゴリーを1つ以上選択してください。');
         }
-
         const formData = new FormData();
         formData.append('name', document.getElementById('new-name').value);
         formData.append('price', document.getElementById('new-price').value);
         formData.append('description', document.getElementById('new-description').value);
-        
-        // 画像ファイルが選択されている場合のみ、FormDataに追加する
         if (imageFile) {
             formData.append('image_file', imageFile);
         }
-        
         formData.append('name_en', document.getElementById('new-name-en').value);
         formData.append('description_en', document.getElementById('new-description-en').value);
         formData.append('category_ids', selectedCategoryIds.join(','));
-
         try {
             await authenticatedAPIFetch(`${API_BASE_URL}/admin/add_product`, { method: 'POST', body: formData });
             alert('メニューを追加しました。');
@@ -383,7 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`追加に失敗: ${error.message}`);
         }
     });
-
     productsTableBody.addEventListener('click', async (e) => {
         const button = e.target.closest('button[data-id]');
         if (!button) return;
@@ -409,12 +468,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
     editForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const productId = editIdInput.value;
         const selectedCategoryIds = Array.from(editCategoryContainer.querySelectorAll('input:checked')).map(cb => cb.value);
-
         const updatedProduct = {
             name: document.getElementById('edit-name').value,
             price: parseInt(document.getElementById('edit-price').value, 10),
@@ -433,10 +490,8 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`更新に失敗: ${error.message}`);
         }
     });
-
     cancelEditBtn.addEventListener('click', closeEditModal);
     editModalOverlay.addEventListener('click', (e) => { if (e.target === editModalOverlay) closeEditModal(); });
-    
     downloadBtn.addEventListener('click', async () => {
         if (!confirm('現在のメニューとカテゴリー設定をExcelファイルとしてダウンロードしますか？')) return;
         try {
@@ -461,7 +516,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`ダウンロードに失敗: ${error.message}`);
         }
     });
-
     uploadBtn.addEventListener('click', async () => {
         const file = menuFileInput.files[0];
         if (!file) return alert('ファイルを選択してください。');
@@ -478,7 +532,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`アップロードに失敗: ${error.message}`);
         }
     });
-
     fetchSalesBtn.addEventListener('click', async () => {
         const startDate = startDateInput.value;
         const endDate = endDateInput.value;
@@ -497,12 +550,10 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`データ取得エラー: ${error.message}`);
         }
     });
-    
     sortByTimeBtn.addEventListener('click', () => { currentSort = 'time'; updateSortButtons(); renderSalesData(); });
     sortByTableBtn.addEventListener('click', () => { currentSort = 'table'; updateSortButtons(); renderSalesData(); });
     sortByProductBtn.addEventListener('click', () => { currentSort = 'product'; updateSortButtons(); renderSalesData(); });
     sortByDurationBtn.addEventListener('click', () => { currentSort = 'duration'; updateSortButtons(); renderSalesData(); });
-    
     passwordChangeForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const targetUser = passwordChangeForm.querySelector('input[name="target_user"]:checked').value;
@@ -522,7 +573,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`パスワード変更中にエラー: ${error.message}`);
         }
     });
-
     openingSettingsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(openingSettingsForm);
@@ -534,7 +584,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`設定更新に失敗: ${error.message}`);
         }
     });
-    
     storeInfoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(storeInfoForm);
@@ -547,7 +596,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`店舗情報更新に失敗: ${error.message}`);
         }
     });
-    
     deleteQrCodeBtn.addEventListener('click', async () => {
         if (!confirm('QRコード画像を削除しますか？')) return;
         try {
@@ -558,7 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`削除に失敗: ${error.message}`);
         }
     });
-
     [deleteImageBtn1, deleteImageBtn2].forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const imageNumber = e.target.dataset.imageNumber;
@@ -572,8 +619,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-    // パスワードの表示/非表示を切り替える機能
     document.querySelectorAll('.toggle-password').forEach(icon => {
         icon.addEventListener('click', (event) => {
             const iconElement = event.currentTarget;
@@ -592,14 +637,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-    // 初期化処理
-    async function init() {
-        await loadCategories();
-        await loadProducts();
-        await loadOpeningSettings();
-        await loadStoreInfo();
-    }
-    
-    init();
 });

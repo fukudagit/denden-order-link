@@ -57,10 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function refreshRegisterView() {
         try {
             const [tablesRes, paidOrdersRes] = await Promise.all([
-                authenticatedFetch('http://127.0.0.1:5000/api/get_table_summary'),
-                authenticatedFetch('http://127.0.0.1:5000/api/get_paid_orders')
-            ]);
-
+                authenticatedFetch('https://my-order-link.onrender.com/api/get_table_summary'),
+                authenticatedFetch('https://my-order-link.onrender.com/api/get_paid_orders')
             if (!tablesRes || !paidOrdersRes || !tablesRes.ok || !paidOrdersRes.ok) return;
             
             const tables = await tablesRes.json();
@@ -141,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handlePrint(type) {
         if (!currentPrintingOrderId) return;
         try {
-            const res = await authenticatedFetch(`http://127.0.0.1:5000/api/get_order_for_print/${currentPrintingOrderId}`);
+                        const res = await authenticatedFetch(`https://my-order-link.onrender.com/api/get_order_for_print/${currentPrintingOrderId}`);
             if (!res || !res.ok) throw new Error('印刷データの取得に失敗しました。');
             
             const data = await res.json();
@@ -287,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 blinkingTables.delete(tableId);
                 // ▼▼▼ 修正点: IPアドレスのタイポを修正 (1227 -> 127) ▼▼▼
-                const res = await authenticatedFetch(`http://127.0.0.1:5000/api/checkout_table/${tableId}`, { method: 'POST' });
+                               const res = await authenticatedFetch(`https://my-order-link.onrender.com/api/checkout_table/${tableId}`, { method: 'POST' });
                 // ▲▲▲ 修正ここまで ▲▲▲
                 if (res && res.ok) {
                     localStorage.setItem('last_checked_out_table', JSON.stringify({

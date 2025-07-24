@@ -441,6 +441,13 @@
 
         <div class="section">
             <h2>メニュー一覧</h2>
+             <!-- ▼▼▼ ここから追加 ▼▼▼ -->
+            <div id="admin-category-tabs" class="category-tabs-admin">
+                <!-- JavaScriptによって、ここにタブが自動的に生成されます -->
+                <p>カテゴリーを読み込み中...</p>
+            </div>
+            <!-- ▲▲▲ ここまで追加 ▲▲▲ -->
+             
             <table id="products-table">
                 <thead>
                     <tr><th>ID</th><th>品名</th><th>価格(円)</th><th>カテゴリー</th><th>品切れ設定</th><th>編集 / 削除</th></tr>
@@ -689,30 +696,5 @@
     </div>
 
     <script src="admin.js"></script>
-
-    <!-- ▼▼▼▼▼ ここが修正点です ▼▼▼▼▼ -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.toggle-password').forEach(icon => {
-                icon.addEventListener('click', (event) => {
-                    const iconElement = event.currentTarget;
-                    const container = iconElement.closest('.password-container');
-                    if (container) {
-                        const passwordInput = container.querySelector('input');
-                        if (passwordInput) {
-                            if (passwordInput.type === 'password') {
-                                passwordInput.type = 'text';
-                                iconElement.textContent = '🙈';
-                            } else {
-                                passwordInput.type = 'password';
-                                iconElement.textContent = '👁️';
-                            }
-                        }
-                    }
-                });
-            });
-        });
-    </script>
-    <!-- ▲▲▲▲▲ ここが修正点です ▲▲▲▲▲ -->
 </body>
 </html>
