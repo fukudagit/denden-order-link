@@ -579,22 +579,31 @@ header {
     transform: translateX(100%);
 }
 
-..message-container {
+.message-container {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10;
-    background-color: transparent; /* ← "transparent"（透明）に変更します */
-    color: #fff;
-    /* ... 以下略 ... */
-}
+    background-color: transparent; /* 背景は透明のまま */
+    color: #fff; /* 文字色は白 */
     padding: 20px 30px;
     border-radius: 8px;
     font-weight: bold;
     max-width: 80%;
     text-align: center;
     line-height: 1.6;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    /* ★★★ ここを修正 ★★★ */
+    /* text-shadowを使って、上下左右に黒い影を配置し、縁取りのように見せる */
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+        -2px  0   0 #000,
+         2px  0   0 #000,
+         0   -2px 0 #000,
+         0    2px 0 #000;
+    /* ★★★ ここまで修正 ★★★ */
     opacity: 0;
     animation: message-fade-in 1.5s ease-out 0.5s forwards;
 }
