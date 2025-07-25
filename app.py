@@ -733,6 +733,14 @@ def upload_menu():
             for row_index, row in enumerate(sheet_menu.iter_rows(min_row=2, values_only=True), start=2):
                 if not row or not row[1]: continue
                 _id, name, price, desc, img, cat_str, sold_out, name_en, desc_en = (row + (None,) * 9)[:9]
+
+            # ★★★ ここから追記 ★★★
+            # もし画像ファイル名(img)が存在すれば、小文字に変換する
+            if img:
+                img = str(img).lower()
+            # ★★★ ここまで追記 ★★★
+
+
                 price_val = 0
                 if price is not None:
                     if isinstance(price, str):
@@ -765,23 +773,23 @@ def upload_menu():
 @app.route('/api/admin/add_product', methods=['POST'])
 @admin_role_required
 def add_product():
-    db = get_db()
-    cursor = db.cursor(cursor_factory=RealDictCursor)
+    # ...
     try:
-        data = request.form
+        # ...
         image_file = request.files.get('image_file')
-        category_ids = [int(cid) for cid in data.get('category_ids', '').split(',') if cid]
-        cursor.execute("INSERT INTO products (name, price, description, name_en, description_en) VALUES (%s, %s, %s, %s, %s) RETURNING id", (data['name'], data['price'], data['description'], data['name_en'], data['description_en']))
-        product_id = cursor.fetchone()['id']
-
+        # ...
         if image_file:
             img = Image.open(image_file.stream)
-            ext = os.path.splitext(secure_filename(image_file.filename))[1].lower()
-            if ext not in ['.jpg', '.jpeg', '.png', '.webp']: raise ValueError("無効な画像形式です。")
-            new_filename = f"{product_id}{ext}"
+            # ★★★ ここから修正 ★★★
+            original_filename = secure_filename(image_file.filename)
+            filename_without_ext, ext = os.path.splitext(original_filename)
+            # 新しいファイル名を生成し、拡張子も含めて全て小文字に変換する
+            new_filename = f"{product_id}{ext}".lower() 
+            # ★★★ ここまで修正 ★★★
             img.save(os.path.join(app.config['IMAGES_FOLDER'], new_filename))
             cursor.execute("UPDATE products SET image_path = %s WHERE id = %s", (new_filename, product_id))
-        
+
+
         if category_ids:
             for cid in category_ids:
                 cursor.execute("INSERT INTO product_categories (product_id, category_id) VALUES (%s, %s)", (product_id, cid))
@@ -799,12 +807,16 @@ def add_product():
 @admin_role_required
 def update_product(product_id):
     data = request.get_json()
-    if not data.get('name') or not data.get('price'): return jsonify({"status": "error", "message": "品名と価格は必須です。"}), 400
-    db = get_db()
-    cursor = db.cursor(cursor_factory=RealDictCursor)
+    # ...
     try:
-        category_ids = [int(cid) for cid in data.get('category_ids', [])]
-        cursor.execute("UPDATE products SET name = %s, price = %s, description = %s, name_en = %s, description_en = %s, image_path = %s WHERE id = %s", (data['name'], data['price'], data['description'], data['name_en'], data['description_en'], data['image_path'], product_id))
+        # ...
+        # ★★★ ここから修正 ★★★
+        # image_pathが存在すれば、小文字に変換してからDBに保存する
+        image_path = data.get('image_path')
+        if image_path:
+            image_path = image_path.lower()
+        # ★★★ ここまで修正 ★★★
+        cursor.execute("UPDATE products SET name = %s, price = %s, description = %s, name_en = %s, description_en = %s, image_path = %s WHERE id = %s", (data['name'], data['price'], data['description'], data['name_en'], data['description_en'], image_path, product_id))
         cursor.execute("DELETE FROM product_categories WHERE product_id = %s", (product_id,))
         if category_ids:
             for cid in category_ids:
