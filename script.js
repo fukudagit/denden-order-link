@@ -1,3 +1,5 @@
+// script.js (修正済み・最終完全版)
+
 document.addEventListener('DOMContentLoaded', () => {
     const menuContainer = document.getElementById('menu-container');
     const tabContainer = document.querySelector('.category-tabs');
@@ -26,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const langJpBtn = document.getElementById('lang-jp-btn');
     const langEnBtn = document.getElementById('lang-en-btn');
 
+    // ★★★ APIのベースURLを定義 ★★★
+    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
+
     let cart = {};
     let currentTableId = null;
     let currentAccessToken = null;
@@ -33,74 +38,34 @@ document.addEventListener('DOMContentLoaded', () => {
     let allProductsData = [];
     let allCategoriesData = [];
     let currentLanguage = 'jp';
-    let storeInfo = { name: 'レストラン「My Order LINK」' }; // デフォルト店舗名
+    let storeInfo = { name: 'レストラン「My Order LINK」' };
 
     const translations = {
         jp: {
-            table: "テーブル番号",
-            checkout: "🧾 会計",
-            call_staff: "🔔 スタッフ呼び出し",
-            menu_loading: "メニューを読み込んでいます...",
-            order_list: "注文リスト",
-            cart_title: "カート (追加する商品)",
-            cart_empty: "カートは空です。",
-            cart_total: "カート合計",
-            yen: "円",
-            items: "品",
-            confirm_order_btn: "注文内容の確認へ",
-            modal_title: "ご注文内容の確認",
-            modal_total_label: "合計金額",
-            modal_back_btn: "戻って編集する",
-            modal_confirm_btn: "この内容で注文を確定する",
-            history_title: "ご注文履歴と会計",
-            history_desc: "これまでのご注文は以下の通りです。",
-            history_total_label: "お会計金額 (合計)",
-            history_note: "お会計を希望される場合は、下のボタンを押してスタッフをお呼びください。",
-            history_close_btn: "閉じる",
-            history_checkout_btn: "会計のためにスタッフを呼ぶ",
-            status_cooking: "調理中",
-            status_ready: "提供待ち",
-            status_served: "提供済み",
-            status_unknown: "不明",
-            add_to_cart: "カートに追加",
-            price_label: "価格",
-            sold_out: "品切れ"
+            table: "テーブル番号", checkout: "🧾 会計", call_staff: "🔔 スタッフ呼び出し", menu_loading: "メニューを読み込んでいます...",
+            order_list: "注文リスト", cart_title: "カート (追加する商品)", cart_empty: "カートは空です。", cart_total: "カート合計",
+            yen: "円", items: "品", confirm_order_btn: "注文内容の確認へ", modal_title: "ご注文内容の確認",
+            modal_total_label: "合計金額", modal_back_btn: "戻って編集する", modal_confirm_btn: "この内容で注文を確定する",
+            history_title: "ご注文履歴と会計", history_desc: "これまでのご注文は以下の通りです。", history_total_label: "お会計金額 (合計)",
+            history_note: "お会計を希望される場合は、下のボタンを押してスタッフをお呼びください。", history_close_btn: "閉じる",
+            history_checkout_btn: "会計のためにスタッフを呼ぶ", status_cooking: "調理中", status_ready: "提供待ち", status_served: "提供済み",
+            status_unknown: "不明", add_to_cart: "カートに追加", price_label: "価格", sold_out: "品切れ"
         },
         en: {
-            table: "Table No.",
-            checkout: "🧾 Bill",
-            call_staff: "🔔 Call Staff",
-            menu_loading: "Loading menu...",
-            order_list: "Order List",
-            cart_title: "Cart (Items to add)",
-            cart_empty: "Cart is empty.",
-            cart_total: "Cart Total",
-            yen: "JPY",
-            items: "items",
-            confirm_order_btn: "Confirm Order",
-            modal_title: "Confirm Your Order",
-            modal_total_label: "Total Amount",
-            modal_back_btn: "Back to Edit",
-            modal_confirm_btn: "Confirm and Place Order",
-            history_title: "Order History & Bill",
-            history_desc: "Your orders so far are as follows.",
-            history_total_label: "Total Bill Amount",
-            history_note: "If you wish to pay, please press the button below to call a staff member.",
-            history_close_btn: "Close",
-            history_checkout_btn: "Call Staff for Bill",
-            status_cooking: "Cooking",
-            status_ready: "Ready",
-            status_served: "Served",
-            status_unknown: "Unknown",
-            add_to_cart: "Add to Cart",
-            price_label: "Price",
-            sold_out: "Sold Out"
+            table: "Table No.", checkout: "🧾 Bill", call_staff: "🔔 Call Staff", menu_loading: "Loading menu...",
+            order_list: "Order List", cart_title: "Cart (Items to add)", cart_empty: "Cart is empty.", cart_total: "Cart Total",
+            yen: "JPY", items: "items", confirm_order_btn: "Confirm Order", modal_title: "Confirm Your Order",
+            modal_total_label: "Total Amount", modal_back_btn: "Back to Edit", modal_confirm_btn: "Confirm and Place Order",
+            history_title: "Order History & Bill", history_desc: "Your orders so far are as follows.", history_total_label: "Total Bill Amount",
+            history_note: "If you wish to pay, please press the button below to call a staff member.", history_close_btn: "Close",
+            history_checkout_btn: "Call Staff for Bill", status_cooking: "Cooking", status_ready: "Ready", status_served: "Served",
+            status_unknown: "Unknown", add_to_cart: "Add to Cart", price_label: "Price", sold_out: "Sold Out"
         }
     };
 
     async function showOpeningScreen() {
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/get_opening_settings');
+            const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
             if (!response.ok) return Promise.resolve();
             
             const settings = await response.json();
@@ -217,8 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initializeMenu() {
         try {
             const [productsRes, categoriesRes] = await Promise.all([
-                fetch('http://127.0.0.1:5000/api/get_products'),
-                fetch('http://127.0.0.1:5000/api/get_categories')
+                fetch(`${API_BASE_URL}/get_products`),
+                fetch(`${API_BASE_URL}/get_categories`)
             ]);
             
             if (!productsRes.ok || !categoriesRes.ok) throw new Error('APIからのデータ取得に失敗');
@@ -239,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function refreshOrderHistory() {
         if (!currentTableId || !currentAccessToken) return;
         try {
-            const res = await fetch(`http://127.0.0.1:5000/api/get_order_history/${currentTableId}?token=${currentAccessToken}`);
+            const res = await fetch(`${API_BASE_URL}/get_order_history/${currentTableId}?token=${currentAccessToken}`);
             if (!res.ok) {
                 orderHistory = { items: [], total_price: 0 };
                 return;
@@ -251,16 +216,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ... (この下の関数は変更がないため、元のコードと同じです)
+    
     function updateCartAndTotals() {
         if (!cartItemsList || !cartTotalPriceElement || !cartItemCountBadge) return;
-        
         cartItemsList.innerHTML = '';
         let cartTotal = 0;
         let totalItemsInCart = 0;
         const itemCountInCart = Object.keys(cart).length;
-
         showModalBtn.disabled = (itemCountInCart === 0);
-
         if (itemCountInCart === 0) {
             cartItemsList.innerHTML = `<li>${translations[currentLanguage].cart_empty}</li>`;
         } else {
@@ -268,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const item = cart[name_jp];
                 const product = allProductsData.find(p => p.name === name_jp);
                 const name = (currentLanguage === 'en' && product?.name_en) ? product.name_en : name_jp;
-
                 totalItemsInCart += item.quantity;
                 cartTotal += item.price * item.quantity;
                 const li = document.createElement('li');
@@ -276,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 cartItemsList.appendChild(li);
             }
         }
-        
         cartTotalPriceElement.textContent = cartTotal.toLocaleString();
         cartItemCountBadge.textContent = `(${totalItemsInCart}${translations[currentLanguage].items})`;
     }
@@ -289,7 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = cart[name_jp];
             const product = allProductsData.find(p => p.name === name_jp);
             const name = (currentLanguage === 'en' && product?.name_en) ? product.name_en : name_jp;
-
             total += item.price * item.quantity;
             const div = document.createElement('div');
             div.innerHTML = `<div class="item-details"><strong>${name}</strong><span>${(item.price * item.quantity).toLocaleString()} ${translations[currentLanguage].yen}</span></div><div class="item-controls"><button class="quantity-btn modal-minus-btn" data-name="${name_jp}">-</button><span class="item-quantity">${item.quantity}</span><button class="quantity-btn modal-plus-btn" data-name="${name_jp}">+</button><button class="delete-btn modal-delete-btn" data-name="${name_jp}">🗑️</button></div>`;
@@ -312,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
             orderHistory.items.forEach(item => {
                 const product = allProductsData.find(p => p.name === item.item_name);
                 const name = (currentLanguage === 'en' && product?.name_en) ? product.name_en : item.item_name;
-                
                 let statusText, statusClass;
                 switch (item.item_status) {
                     case 'cooking': statusText = translations[currentLanguage].status_cooking; statusClass = 'status-cooking'; break;
@@ -331,7 +291,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderCategoryTabs(categories) {
         if (!tabContainer) return;
-        
         let html = '<button class="tab-btn active" data-category="all">すべて</button>';
         categories.forEach(cat => { 
             const name = (currentLanguage === 'en' && cat.name_en) ? cat.name_en : cat.name_jp;
@@ -375,24 +334,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleSendOrder() {
         const items = Object.keys(cart).map(name => ({ name, quantity: cart[name].quantity }));
-        if (items.length === 0) {
-            return;
-        }
+        if (items.length === 0) return;
 
         try {
             confirmOrderBtn.disabled = true;
             confirmOrderBtn.textContent = '注文中...';
             
-            const response = await fetch('http://127.0.0.1:5000/api/order', {
+            const response = await fetch(`${API_BASE_URL}/order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tableId: currentTableId, accessToken: currentAccessToken, items })
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ 
-                    message: `サーバーで問題が発生しました (ステータス: ${response.status})` 
-                }));
+                const errorData = await response.json().catch(() => ({ message: `サーバーで問題が発生しました (ステータス: ${response.status})` }));
                 throw new Error(errorData.message || '不明な注文エラーです。');
             }
 
@@ -404,33 +359,23 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             alert(`注文エラー: ${error.message}`);
-            console.error('注文処理中にエラーが発生しました:', error);
         } finally {
             confirmOrderBtn.disabled = false;
             updateUILanguage();
         }
     }
 
-    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
     async function handleCallStaff(isCheckout = false) {
         const callType = isCheckout ? 'checkout' : 'normal';
         try {
-            const res = await fetch('http://127.0.0.1:5000/api/call', { 
+            const res = await fetch(`${API_BASE_URL}/call`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ 
-                    tableId: currentTableId, 
-                    token: currentAccessToken,
-                    call_type: callType // 呼び出し種別を送信
-                }) 
+                body: JSON.stringify({ tableId: currentTableId, token: currentAccessToken, call_type: callType }) 
             });
             
             if (res.ok) {
-                if (isCheckout) {
-                    alert('お会計のためにスタッフを呼び出しました。テーブルにてお待ちください。');
-                } else {
-                    alert('スタッフを呼び出しました。少々お待ちください。');
-                }
+                alert(isCheckout ? 'お会計のためにスタッフを呼び出しました。テーブルにてお待ちください。' : 'スタッフを呼び出しました。少々お待ちください。');
                 return true;
             } else {
                 const err = await res.json().catch(() => ({}));
@@ -439,11 +384,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             alert('呼び出しに失敗しました。ネットワーク接続などを確認してください。');
-            console.error(error);
             return false;
         }
     }
-    // ▲▲▲▲▲ ここまで修正 ▲▲▲▲▲
     
     function setupSession() {
         const params = new URLSearchParams(window.location.search);
@@ -466,17 +409,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUILanguage() {
         const lang = currentLanguage;
         const tr = translations[lang];
-
-        if (storeNameDisplay) {
-            storeNameDisplay.textContent = storeInfo.name;
-        }
-        if (tableLabel) {
-            tableLabel.textContent = tr.table + ':';
-        }
-        if (tableNumberValue) {
-            tableNumberValue.textContent = currentTableId;
-        }
-        
+        if (storeNameDisplay) storeNameDisplay.textContent = storeInfo.name;
+        if (tableLabel) tableLabel.textContent = tr.table + ':';
+        if (tableNumberValue) tableNumberValue.textContent = currentTableId;
         checkoutRequestBtn.textContent = tr.checkout;
         callStaffBtn.textContent = tr.call_staff;
         cartHeader.textContent = tr.order_list;
@@ -493,7 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('history-modal-note').textContent = tr.history_note;
         closeHistoryModalBtn.textContent = tr.history_close_btn;
         confirmCheckoutBtn.textContent = tr.history_checkout_btn;
-
         const activeCategory = tabContainer.querySelector('.tab-btn.active')?.dataset.category || 'all';
         renderCategoryTabs(allCategoriesData); 
         const newActiveTab = tabContainer.querySelector(`.tab-btn[data-category="${activeCategory}"]`);
@@ -501,7 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tabContainer.querySelector('.tab-btn.active')?.classList.remove('active');
             newActiveTab.classList.add('active');
         }
-        
         renderMenuItems(allProductsData);
         filterMenuByCategory(activeCategory);
         updateCartAndTotals();
@@ -511,7 +444,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEventListeners() {
         document.body.addEventListener('click', async (e) => {
             const target = e.target;
-            
             if (target.matches('.language-switcher button')) {
                 const selectedLang = target.dataset.lang;
                 if (selectedLang !== currentLanguage) {
@@ -522,7 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-
             const menuItem = target.closest('.menu-item:not(.sold-out)');
             const cartItemControls = target.closest('.item-controls');
             if (target.matches('.category-tabs .tab-btn')) {
@@ -557,23 +488,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateCartAndTotals();
                 if (modalOverlay && !modalOverlay.classList.contains('hidden')) updateModalCart();
             }
-            else if (target === callStaffBtn) { 
-                await handleCallStaff(false); // 通常呼び出し
-            }
-            else if (target === confirmOrderBtn) { 
-                handleSendOrder();
-            }
+            else if (target === callStaffBtn) { await handleCallStaff(false); }
+            else if (target === confirmOrderBtn) { handleSendOrder(); }
             else if (target === cartHeader || cartHeader?.contains(target)) { cartElement?.classList.toggle('collapsed'); }
             else if (target === showModalBtn) { if (Object.keys(cart).length) { updateModalCart(); modalOverlay.classList.remove('hidden'); } }
             else if (target === closeModalBtn || target === modalOverlay) { modalOverlay.classList.add('hidden'); }
-            else if (target === checkoutRequestBtn) { 
-                openHistoryModal();
-            }
-            else if (target === closeHistoryModalBtn || target === historyModalOverlay) { 
-                historyModalOverlay.classList.add('hidden'); 
-            }
+            else if (target === checkoutRequestBtn) { openHistoryModal(); }
+            else if (target === closeHistoryModalBtn || target === historyModalOverlay) { historyModalOverlay.classList.add('hidden'); }
             else if (target === confirmCheckoutBtn) {
-                const success = await handleCallStaff(true); // 会計呼び出し
+                const success = await handleCallStaff(true);
                 if(success) {
                     historyModalOverlay.classList.add('hidden');
                 }
@@ -586,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await showOpeningScreen();
             
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/get_public_store_info');
+                const res = await fetch(`${API_BASE_URL}/get_public_store_info`);
                 if (res.ok) {
                     const data = await res.json();
                     if(data.store_name) {

@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // ★★★ APIのベースURLを定義 ★★★
+    // ★★★ APIのベースURLを本番環境用に修正 ★★★
     const API_BASE_URL = 'https://my-order-link.onrender.com/api';
 
     document.querySelector('head').innerHTML += '<link rel="stylesheet" href="hall.css?v=2.0">'; // キャッシュ対策
@@ -252,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!res) return;
                 const data = await res.json();
                 if (res.ok && data.status === 'success') {
-                    // ★★★ window.location.originを使うように変更 ★★★
                     const orderUrl = `${window.location.origin}/index.html?table=${data.tableId}&token=${data.accessToken}`;
                     tableStates[tableId] = { accessToken: data.accessToken, orderUrl: orderUrl };
                     const newCard = createTableCard(tableId, orderUrl);
@@ -361,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 初期化と定期更新
     setupEventListeners();
     setInterval(refreshHallView, 3000); 
     refreshHallView();
