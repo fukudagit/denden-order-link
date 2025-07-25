@@ -644,3 +644,59 @@ header {
         bottom: 10px;
     }
 }
+
+/* --- ここからスマートフォン用のスタイルを追加 --- */
+
+/* 画面幅が768px以下の場合に適用 */
+@media (max-width: 768px) {
+
+    /* オープニング画面の文字サイズを調整 */
+    .message-container.horizontal-tb,
+    .message-container.vertical-rl {
+        font-size: 1.5em; /* PC用の2.2emからサイズダウン */
+        padding: 15px 20px;
+    }
+
+    /* ヘッダーのデザインをスマホ向けに調整 */
+    header {
+        padding: 10px 15px;
+        flex-direction: column; /* 要素を縦並びにする */
+        align-items: flex-start; /* 左揃えにする */
+        gap: 10px;
+    }
+    .header-info, .header-actions {
+        width: 100%; /* 横幅いっぱいに広げる */
+    }
+    .header-actions {
+        justify-content: space-between; /* ボタンを両端に配置 */
+    }
+    #call-staff-btn, #checkout-request-btn {
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+
+    /* メニュー項目のレイアウトをスマホ向けに調整 */
+    .menu-item {
+        flex-direction: column; /* 要素を縦並びにする */
+        align-items: flex-start; /* 左揃えにする */
+        gap: 10px;
+    }
+    .menu-item img {
+        width: 100%; /* 画像を横幅いっぱいに表示 */
+        height: 180px; /* 高さを固定 */
+        object-fit: cover;
+    }
+    .menu-item .actions {
+        width: 100%; /* 数量セレクタとボタンを横幅いっぱいに */
+        justify-content: space-between; /* 数量セレクタとボタンを両端に */
+    }
+
+    /* カート（注文リスト）の位置とサイズを調整 */
+    .cart {
+        width: auto;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+    }
+}
+/* --- スマートフォン用のスタイルここまで --- */
