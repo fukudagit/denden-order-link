@@ -1,3 +1,4 @@
+// kitchen.js (最終版)
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('staff_token');
     if (!token) {
@@ -5,7 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // CSSを動的に読み込み
+    // ★★★ APIのベースURLを本番環境用に修正 ★★★
+    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
+
     document.querySelector('head').innerHTML += '<link rel="stylesheet" href="kitchen.css">';
     const appContainer = document.getElementById('app-container');
     appContainer.innerHTML = `
@@ -34,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function refreshKitchenView() {
         try {
-            const response = await authenticatedFetch('http://127.0.0.1:5000/api/get_all_active_orders');
+            const response = await authenticatedFetch(`${API_BASE_URL}/get_all_active_orders`);
             if (!response || !response.ok) return;
             const orders = await response.json();
             
@@ -46,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item.item_status === 'cooking') {
                         incomingItems.add(item.id.toString());
                         if (!currentlyDisplayed.has(item.id.toString())) {
-                            // 新しいカードを追加する前にプレースホルダーを削除
                             const placeholder = kitchenDisplay.querySelector('p');
                             if (placeholder) placeholder.remove();
                             kitchenDisplay.appendChild(createItemCard(order, item));
@@ -87,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemId = event.target.dataset.itemId;
             if (!itemId) return;
             try {
-                const response = await authenticatedFetch(`http://127.0.0.1:5000/api/update_item_status/${itemId}`, {
+                const response = await authenticatedFetch(`${API_BASE_URL}/update_item_status/${itemId}`, {
                     method: 'POST',
                     body: JSON.stringify({ status: 'ready' }),
                 });

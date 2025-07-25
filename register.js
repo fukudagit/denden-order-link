@@ -1,9 +1,14 @@
+// register.js (最終版・文法修正済み)
+
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('staff_token');
     if (!token) {
         window.location.href = '/login.html';
         return;
     }
+
+    // ★★★ APIのベースURLを本番環境用に修正 ★★★
+    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
     
     const appContainer = document.getElementById('app-container');
     appContainer.innerHTML = `
@@ -57,8 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function refreshRegisterView() {
         try {
             const [tablesRes, paidOrdersRes] = await Promise.all([
-                authenticatedFetch('https://my-order-link.onrender.com/api/get_table_summary'),
-                authenticatedFetch('https://my-order-link.onrender.com/api/get_paid_orders')
+                authenticatedFetch(`${API_BASE_URL}/get_table_summary`),
+                authenticatedFetch(`${API_BASE_URL}/get_paid_orders`)
+            ]);
+
             if (!tablesRes || !paidOrdersRes || !tablesRes.ok || !paidOrdersRes.ok) return;
             
             const tables = await tablesRes.json();
@@ -139,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handlePrint(type) {
         if (!currentPrintingOrderId) return;
         try {
-                        const res = await authenticatedFetch(`https://my-order-link.onrender.com/api/get_order_for_print/${currentPrintingOrderId}`);
+            const res = await authenticatedFetch(`${API_BASE_URL}/get_order_for_print/${currentPrintingOrderId}`);
             if (!res || !res.ok) throw new Error('印刷データの取得に失敗しました。');
             
             const data = await res.json();
@@ -205,59 +212,34 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.write(`
                 <!DOCTYPE html>
                 <html lang="ja">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>印刷</title>
-                        <style>
-                            body { margin: 0; padding: 0; background-color: #fff; font-family: 'MS Gothic', 'Osaka-mono', monospace; font-size: 10pt; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                            .receipt-container { width: 80mm; padding: 2mm; box-sizing: border-box; }
-                            .store-info { text-align: center; padding-bottom: 5px; }
-                            .store-info h1 { font-size: 14pt; margin: 10px 0 5px 0; }
-                            .store-info p { margin: 2px 0; font-size: 9pt; }
-                            hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
-                            .receipt-info { text-align: left; }
-                            .receipt-info h2 { text-align: center; margin: 10px 0; font-size: 14pt; font-weight: bold; }
-                            .receipt-info p { margin: 3px 0; }
-                            .items-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
-                            .items-table th, .items-table td { padding: 3px 0; text-align: left; vertical-align: top; }
-                            .items-table th { border-bottom: 1px solid #000; }
-                            .items-table .col-qty { text-align: right; padding-right: 5px; }
-                            .items-table .col-price { text-align: right; }
-                            .total-section { margin-top: 10px; text-align: right; font-size: 12pt; }
-                            .total-section p { margin: 5px 0; }
-                            .total-section p:last-child { font-size: 16pt; font-weight: bold; }
-                            .receipt-note { margin-top: 15px; font-size: 9pt; }
-                            .receipt-footer { margin-top: 20px; text-align: center; font-size: 9pt; }
-                            .qr-code-section { margin: 10px auto; text-align: center; }
-                            .qr-code-section p { margin: 0 0 5px 0; }
-                            .qr-code-section img { max-width: 18mm; width: 100%; height: auto; }
-                            .customer-name-line { display: flex; align-items: baseline; margin: 10px 0; font-size: 12pt; min-height: 1.5em; }
-                            .customer-name-field { flex-grow: 1; border-bottom: 1px solid #000; padding-bottom: 2px; margin-right: 5px; }
-                        </style>
+                    <head><meta charset="UTF-8"><title>印刷</title>
+                    <style>
+                        body { margin: 0; padding: 0; background-color: #fff; font-family: 'MS Gothic', 'Osaka-mono', monospace; font-size: 10pt; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        .receipt-container { width: 80mm; padding: 2mm; box-sizing: border-box; }
+                        .store-info { text-align: center; padding-bottom: 5px; } h1 { font-size: 14pt; margin: 10px 0 5px 0; } p { margin: 2px 0; font-size: 9pt; }
+                        hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+                        .receipt-info h2 { text-align: center; margin: 10px 0; font-size: 14pt; font-weight: bold; }
+                        .items-table { width: 100%; margin-top: 10px; border-collapse: collapse; } th, td { padding: 3px 0; text-align: left; vertical-align: top; } th { border-bottom: 1px solid #000; }
+                        .col-qty { text-align: right; padding-right: 5px; } .col-price { text-align: right; }
+                        .total-section { margin-top: 10px; text-align: right; font-size: 12pt; } .total-section p { margin: 5px 0; } .total-section p:last-child { font-size: 16pt; font-weight: bold; }
+                        .qr-code-section { margin: 10px auto; text-align: center; } .qr-code-section img { max-width: 18mm; }
+                        .customer-name-line { display: flex; align-items: baseline; margin: 10px 0; font-size: 12pt; min-height: 1.5em; }
+                        .customer-name-field { flex-grow: 1; border-bottom: 1px solid #000; padding-bottom: 2px; margin-right: 5px; }
+                    </style>
                     </head>
                     <body>
                         <div class="receipt-container">
                             <header class="store-info">
-                                <h1>${store_info.store_name || '店舗名なし'}</h1>
-                                <p>${store_info.store_address || '住所なし'}</p>
-                                <p>TEL: ${store_info.store_tel || '電話番号なし'}</p>
+                                <h1>${store_info.store_name || ''}</h1><p>${store_info.store_address || ''}</p><p>TEL: ${store_info.store_tel || ''}</p>
                             </header>
                             <hr>
                             <section class="receipt-info">
-                                <h2>${title}</h2>
-                                ${toCustomer}
-                                <p>発行日時: ${printTime}</p>
-                                ${receiptNumber}
+                                <h2>${title}</h2>${toCustomer}<p>発行日時: ${printTime}</p>${receiptNumber}
                             </section>
                             <hr>
                             ${contentHtml}
-                            <div class="receipt-note">
-                                <p>${store_info.store_receipt_note || ''}</p>
-                            </div>
-                            <footer class="receipt-footer">
-                                ${qrCodeHtml}
-                                <p>ご来店ありがとうございました。</p>
-                            </footer>
+                            <div class="receipt-note"><p>${store_info.store_receipt_note || ''}</p></div>
+                            <footer class="receipt-footer">${qrCodeHtml}<p>ご来店ありがとうございました。</p></footer>
                         </div>
                     </body>
                 </html>`);
@@ -270,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             alert(error.message);
-            console.error(error);
         } finally {
             printModalOverlay.classList.add('hidden');
         }
@@ -284,9 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!tableId || !confirm(`テーブル ${tableId} を会計しますか？`)) return;
             try {
                 blinkingTables.delete(tableId);
-                // ▼▼▼ 修正点: IPアドレスのタイポを修正 (1227 -> 127) ▼▼▼
-                               const res = await authenticatedFetch(`https://my-order-link.onrender.com/api/checkout_table/${tableId}`, { method: 'POST' });
-                // ▲▲▲ 修正ここまで ▲▲▲
+                const res = await authenticatedFetch(`${API_BASE_URL}/checkout_table/${tableId}`, { method: 'POST' });
                 if (res && res.ok) {
                     localStorage.setItem('last_checked_out_table', JSON.stringify({
                         tableId: tableId,
