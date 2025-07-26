@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rise 導入・設定マニュアル（管理者様向け）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; line-height: 1.7; color: #333; background-color: #fdfdfd; margin: 0; padding: 0; }
+        header { background-color: #d32f2f; color: white; padding: 20px 40px; text-align: center; }
+        header h1 { margin: 0; font-size: 2em; }
+        header .breadcrumb { margin-top: 10px; }
+        header a { color: #ffcdd2; text-decoration: none; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 8px; }
+        h2 { border-bottom: 2px solid #ef5350; padding-bottom: 10px; margin-top: 40px; font-size: 1.6em; }
+        h3 { border-left: 5px solid #ef5350; padding-left: 10px; font-size: 1.3em; }
+        p, li { font-size: 1em; }
+        .screenshot { width: 100%; max-width: 700px; margin: 20px auto; display: block; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .screenshot:hover { transform: scale(1.02); }
+        .important { background-color: #fffde7; border: 1px solid #fff59d; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .important strong { color: #f57f17; }
+        code { background-color: #eee; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .overlay img { max-width: 90%; max-height: 90%; }
+        .info-box { background-color: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>導入・設定マニュアル</h1>
+        <!-- ★★★ パスを修正 ★★★ -->
+        <div class="breadcrumb"><a href="./manual-cover.html">TOP</a> > 管理者様向け</div>
+    </header>
+    <div class="container">
+        <p>このたびは、地域のお店を応援するオーダー管理システム『Rise』にご関心をお寄せいただき、誠にありがとうございます。</p>
+        <p>『Rise』は、ITが苦手な方でも、スマートフォン一つで簡単に使えるように設計された、お店のための小さな相棒です。このマニュアルでは、店長・オーナー様ご自身で、お店のメニューを登録したり、設定を変更したりする方法を、一つひとつ丁寧に説明します。</p>
+        
+        <h2>1. ログインと画面の紹介</h2>
+        <p>まずは『Rise』にログインし、管理者だけが使える特別な画面を見てみましょう。</p>
+        <h3>ステップ1：ログインする</h3>
+        <p>提供されたURLからログイン画面を開き、管理者用のIDとパスワードでログインします。</p>
+        <!-- ★★★ パスを修正 ★★★ -->
+        <img src="./images/01-login-screen.jpg" alt="ログイン画面" class="screenshot">
+        <h3>ステップ2：「管理者画面」を選択</h3>
+        <p>ログインに成功すると、役割を選ぶ画面が表示されます。一番下の赤いボタン**「管理者画面」**を押してください。</p>
+        <img src="./images/02-role-selection.jpg" alt="役割選択画面" class="screenshot">
+        <h3>ステップ3：管理者画面の全体像</h3>
+        <p>これが管理者画面です。ここからお店の全ての設定ができます。画面は大きく分けて「売上分析」「Excel登録」「カテゴリー管理」「メニュー管理」「各種設定」のセクションに分かれています。</p>
+        <img src="./images/11-admin-dashboard_01.jpg" alt="管理者画面上部" class="screenshot">
+        <img src="./images/11-admin-dashboard_02.jpg" alt="管理者画面中部" class="screenshot">
+        <img src="./images/11-admin-dashboard_03.jpg" alt="管理者画面下部" class="screenshot">
+
+        <h2>2. 初期設定：お店の情報を登録しよう</h2>
+        <p>お客様にお渡しするレシートに印刷される、お店の基本情報を登録します。</p>
+        <h3>店舗情報の設定</h3>
+        <p>管理者画面の一番下にある「**店舗情報設定（領収書用）**」で、お店の名前や住所、電話番号を入力します。「補足情報」にはインボイス登録番号などを記載できます。入力後、**「店舗情報を保存」**ボタンを押してください。</p>
+        <img src="./images/12-admin-store-info.jpg" alt="店舗情報設定" class="screenshot">
+        <h3>パスワードの変更</h3>
+        <p>セキュリティのため、最初のパスワードは変更しておきましょう。「**パスワード変更**」セクションで、管理者用とスタッフ用の両方のパスワードを変更できます。</p>
+        <img src="./images/13-admin-password.jpg" alt="パスワード変更" class="screenshot">
+
+        <h2>3. メニュー管理：お店の味を世界に届けよう！</h2>
+        <p>『Rise』の心臓部、メニューの登録です。一番のおすすめは、使い慣れたExcelでの一括登録です。</p>
+        <h3>3.1. Excelでかんたん一括登録（推奨）</h3>
+        <h4>ステップ1：テンプレートのダウンロード</h4>
+        <p>「**Excelから一括登録 / バックアップ**」セクションの**「現在のメニューとカテゴリー設定をダウンロード」**ボタンを押し、テンプレートとなるExcelファイルをダウンロードします。</p>
+        <img src="./images/14-admin-excel-upload.jpg" alt="Excelアップロードセクション" class="screenshot">
+        <h4>ステップ2：Excelにメニューを記入</h4>
+        <p>ダウンロードしたファイルを開き、「カテゴリー設定」シートと「メニュー」シートに情報を入力します。</p>
+        <div class="important">
+            <strong>【インバウンド対応のキモ！】</strong><br>
+            「カテゴリー名(English)」や「商品名(英語)」の欄をしっかり入力しておくことで、外国人観光客のお客様が言語を切り替えた際に英語メニューが表示されるようになります。ぜひ活用しましょう！
+        </div>
+        <h4>ステップ3：画像ファイルの準備</h4>
+        <p>メニューで使う写真は、PCのプロジェクトフォルダ内にある`images`フォルダに入れておきます。</p>
+        <div class="important">
+            <strong>【重要ルール】</strong><br>
+            画像ファイルの名前は、必ず**「半角英数字の小文字」**にしてください。（例: `karaage.jpg`, `salad.png`）<br>
+            そして、Excelの「画像ファイル名」の列には、このファイル名を**大文字・小文字まで含めて全く同じように**入力してください。
+        </div>
+        <h4>ステップ4：アップロード</h4>
+        <p>準備したExcelファイルを「ファイルを選択」ボタンで選び、**「アップロード実行」**ボタンを押せば完了です！</p>
+        <h3>3.2. 登録内容の確認と個別修正</h3>
+        <p>アップロードが成功すると、「カテゴリー管理」や「メニュー一覧」にデータが反映されます。</p>
+        <img src="./images/15-admin-category-list.jpg" alt="カテゴリー一覧" class="screenshot">
+        <img src="./images/16-admin-menu-list.jpg" alt="メニュー一覧" class="screenshot">
+        <p>もし、一部だけ修正したい場合は、各項目の右側にある「修正」ボタンから、いつでも個別に編集できます。</p>
+        <img src="./images/17-admin-menu-edit.jpg" alt="メニュー修正画面" class="screenshot">
+
+        <h2>4. その他の設定</h2>
+        <h3>オープニング画面設定</h3>
+        <p>お客様がQRコードを読み取った際に最初に表示される、お店のウェルカム画面を設定できます。美しい風景写真や、お店のロゴなどを設定して、お客様をおもてなししましょう。</p>
+        <img src="./images/18-opening-settings.jpg" alt="オープニング画面設定" class="screenshot">
+
+        <h2>5. 運用について</h2>
+        <h3>サポートについて</h3>
+        <p>『Rise』は、地域の事業者を応援するための非営利プロジェクトです。そのため、専門のサポートスタッフによる電話対応や、お店に直接お伺いしての対応（オンサイトサポート）は行っておりません。操作にご不明な点があれば、いつでも開発者にご連絡ください。一緒に解決策を見つけましょう。</p>
+        <h3>モニタリング費用について</h3>
+        <p>このシステムを継続的に維持・改善していくため、大変心苦しいのですが、以下の通りシステムのモニタリング費用（食事券）のご協力をお願いしております。</p>
+        <ul>
+            <li><strong>毎月の売上が50万円未満の場合:</strong> 3,000円分のお食事券</li>
+            <li><strong>毎月の売上が50万円以上の場合:</strong> 売上合計の1%に相当する額のお食事券</li>
+        </ul>
+        <p>これは、開発者が実際にあなたのお店に伺い、お客様として食事をし、システムの稼働状況を体感させていただくための大切な費用です。ご協力のほど、何卒よろしくお願い申し上げます。</p>
+    </div>
+
+    <div class="overlay" id="image-overlay">
+        <img src="" alt="拡大画像" id="overlay-image">
+    </div>
+
+    <script>
+        const overlay = document.getElementById('image-overlay');
+        const overlayImage = document.getElementById('overlay-image');
+        document.querySelectorAll('.screenshot').forEach(img => {
+            img.addEventListener('click', () => {
+                overlayImage.src = img.src;
+                overlay.style.display = 'flex';
+            });
+        });
+        overlay.addEventListener('click', () => {
+            overlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

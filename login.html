@@ -78,6 +78,25 @@
         .role-selection button:hover {
             background-color: #218838;
         }
+
+/* ここから追記 */
+.manual-button {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+.manual-button:hover {
+    background-color: #5a6268;
+}
+/* ここまで追記 */
+
+
     </style>
 </head>
 <body>
@@ -98,6 +117,13 @@
             </div>
             <button type="submit">ログイン</button>
         </form>
+
+<!-- ここから追記 -->
+<div style="margin-top: 25px;">
+    <a href="ROS_manual/manual-cover.html" class="manual-button">操作マニュアルを見る</a>
+</div>
+<!-- ここまで追記 -->
+
         <p id="error-message"></p>
     </div>
 

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rise オペレーションマニュアル（日々の操作編）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans JP', sans-serif; line-height: 1.7; color: #333; background-color: #fdfdfd; margin: 0; padding: 0; }
+        header { background-color: #388e3c; color: white; padding: 20px 40px; text-align: center; }
+        header h1 { margin: 0; font-size: 2em; }
+        header .breadcrumb { margin-top: 10px; }
+        header a { color: #c8e6c9; text-decoration: none; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 8px; }
+        h2 { border-bottom: 2px solid #66bb6a; padding-bottom: 10px; margin-top: 40px; font-size: 1.6em; }
+        h3 { border-left: 5px solid #66bb6a; padding-left: 10px; font-size: 1.3em; }
+        p, li { font-size: 1em; }
+        .screenshot { width: 100%; max-width: 700px; margin: 20px auto; display: block; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .screenshot:hover { transform: scale(1.02); }
+        .info-box { background-color: #e8f5e9; border: 1px solid #a5d6a7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .info-box strong { color: #2e7d32; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .overlay img { max-width: 90%; max-height: 90%; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>オペレーションマニュアル（日々の操作編）</h1>
+        <!-- ★★★ パスを修正 ★★★ -->
+        <div class="breadcrumb"><a href="./manual-cover.html">TOP</a> > 店舗スタッフ様向け</div>
+    </header>
+    <div class="container">
+        <p>『Rise』へようこそ！このマニュアルは、日々の営業で『Rise』を使うための、かんたんな操作説明書です。難しいことは何もありません。いつもの仕事が、少しだけ楽になる。そんな風に感じていただけたら嬉しいです。</p>
+
+        <h2>1. ログイン</h2>
+        <p>お店のタブレットやPCで、指定されたURLを開き、店長から伝えられたスタッフ共用のIDとパスワードでログインします。その後、あなたの役割に合った画面を選択してください。</p>
+        <!-- ★★★ パスを修正 ★★★ -->
+        <img src="./images/01-login-screen.jpg" alt="ログイン画面" class="screenshot">
+        <img src="./images/02-role-selection.jpg" alt="役割選択画面" class="screenshot">
+
+        <h2>2. 【ホール担当の方へ】フロアの司令塔になろう！</h2>
+        <p>お客様のご案内から注文の管理まで、ホールのお仕事がぐっとスムーズになります。</p>
+        <h3>お客様がご来店されたら</h3>
+        <p>「**テーブル管理**」セクションで、ご案内するテーブル番号を入力し、**「テーブルを追加」**ボタンを押します。新しくできたカードの**「QR表示」**ボタンを押し、お客様にQRコードを提示します。</p>
+        <img src="./images/22-hall-add-table.jpg" alt="テーブル追加" class="screenshot">
+        <img src="./images/23-hall-show-qr.jpg" alt="QRコード表示" class="screenshot">
+        <h3>お客様からの「呼び出し」に対応する</h3>
+        <p>お客様が呼び出しボタンを押すと、「**呼び出し中 📞**」セクションに赤いカードが表示されます。ご用件を伺ったら**「対応済み」**ボタンを押しましょう。</p>
+        <img src="./images/24-hall-calling.jpg" alt="呼び出し対応" class="screenshot">
+        <h3>注文状況を確認する</h3>
+        <p>「**ホール状況**」を見れば、全テーブルの状況が一目でわかります。特に「**提供待ちリスト 🔔**」に表示されたお料理は、調理が完了した合図です。速やかにお客様の元へ運びましょう！</p>
+        <img src="./images/25-hall-status-lists.jpg" alt="ホール状況" class="screenshot">
+
+        <h2>3. 【厨房担当の方へ】最高の料理に集中しよう！</h2>
+        <p>お客様が注文を確定すると、厨房画面に自動的に**「調理カード」**が追加されます。調理が完了したら、そのカードの**「調理完了」**ボタンを押してください。ホール担当がお客様へ運んでくれます。</p>
+        <img src="./images/31-kitchen-dashboard.jpg" alt="厨房ディスプレイ" class="screenshot">
+
+        <h2>4. 【レジ担当の方へ】お会計をスマートに！</h2>
+        <p>レジ画面には、ご利用中のテーブルとお会計金額が自動で表示されます。お客様のテーブル番号を確認し、該当するカードの**「テーブル会計」**ボタンを押せば会計処理は完了です。</p>
+        <img src="./images/41-register-dashboard.jpg" alt="レジ画面" class="screenshot">
+        <p>領収書が必要な場合は、「会計済み履歴」の**「印刷」**ボタンから発行できます。</p>
+        <img src="./images/43-register-print-modal.jpg" alt="印刷オプション" class="screenshot">
+
+        <h2>5. 【お客様のスマホ画面】</h2>
+        <p>参考までに、お客様が見ているスマートフォン画面はこのようになっています。</p>
+        <h3>オープニング画面</h3>
+        <p>QRコードを読み取ると、まずお店のウェルカムメッセージが表示されます。</p>
+        <img src="./images/51-customer-opening.jpg" alt="顧客向けオープニング画面" class="screenshot">
+        <h3>メニュー画面</h3>
+        <p>美味しそうな写真と共に、メニューが一覧で表示されます。ここから商品を選んでカートに追加します。</p>
+        <img src="./images/52-customer-menu.jpg" alt="顧客向けメニュー画面" class="screenshot">
+        <h3>注文確認画面</h3>
+        <p>注文したい商品を選び終わったら、この画面で内容を最終確認し、注文を確定します。</p>
+        <img src="./images/53-customer-confirm-modal.jpg" alt="顧客向け注文確認画面" class="screenshot">
+
+        <div class="info-box">
+            <strong>【大切なこと】</strong><br>
+            『Rise』は、あなたのお仕事をサポートするための道具です。もし、ご高齢のお客様など、スマートフォン操作が苦手な方がいらっしゃいましたら、これまで通り、優しく口頭でご注文をお受けしてください。その際は、ホール画面の「代行注文」機能が便利です。
+        </div>
+    </div>
+    
+    <div class="overlay" id="image-overlay">
+        <img src="" alt="拡大画像" id="overlay-image">
+    </div>
+
+    <script>
+        const overlay = document.getElementById('image-overlay');
+        const overlayImage = document.getElementById('overlay-image');
+        document.querySelectorAll('.screenshot').forEach(img => {
+            img.addEventListener('click', () => {
+                overlayImage.src = img.src;
+                overlay.style.display = 'flex';
+            });
+        });
+        overlay.addEventListener('click', () => {
+            overlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
