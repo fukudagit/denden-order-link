@@ -6,7 +6,7 @@
     <title>Rise 操作マニュアル</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Noto Sans JP', sans-serif;
@@ -18,68 +18,64 @@
             align-items: center;
             min-height: 100vh;
             text-align: center;
+            overflow: hidden; 
         }
         .container {
             padding: 40px;
-            max-width: 600px;
+            max-width: 700px; /* コンテナ自体も少し大きく */
+            opacity: 1;
+            transition: opacity 1.0s ease-in-out; 
+        }
+        .container.fade-out {
+            opacity: 0;
         }
         .logo {
-            width: 150px;
-            height: 150px;
+            width: 250px;
+            height: 250px;
             border-radius: 50%;
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            /* ★★★ アニメーションの指定方法を修正 ★★★ */
+            transform: scale(1); /* 初期状態は1倍 */
+            animation: zoom-animation 3.0s ease-out forwards;
         }
+        /* ★★★ アニメーションの定義を修正 ★★★ */
+        @keyframes zoom-animation {
+            100% {
+                transform: scale(2); /* 3秒かけて2倍の大きさになる */
+            }
+        }
+        
+        /* ★★★ テキストのフォントサイズを大きく ★★★ */
         h1 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 2.8em;
+            font-size: 4em; 
             color: #1a237e;
-            margin: 0 0 10px 0;
+            margin: 0 0 15px 0;
             letter-spacing: 1px;
         }
         .subtitle {
             font-family: 'Montserrat', sans-serif;
-            font-size: 1.2em;
+            font-size: 1.6em;
             color: #546e7a;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
         .concept {
-            font-size: 1.1em;
+            font-size: 1.2em;
             line-height: 1.8;
             color: #444;
-            margin-bottom: 40px;
+            margin-bottom: 45px;
         }
-        .nav-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .btn {
-            display: block;
-            padding: 15px 30px;
-            text-decoration: none;
-            color: #fff;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-        }
-        .btn-admin {
-            background-color: #d32f2f;
-        }
-        .btn-staff {
-            background-color: #388e3c;
-        }
+        
+        .nav-buttons { display: flex; flex-direction: column; gap: 15px; }
+        .btn { display: block; padding: 15px 30px; text-decoration: none; color: #fff; border-radius: 8px; font-weight: bold; font-size: 1.2em; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+        .btn-admin { background-color: #d32f2f; }
+        .btn-staff { background-color: #388e3c; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- ★★★ パスとファイル名を修正 ★★★ -->
+    <div class="container" id="main-container">
         <img src="/images/rise-logo.png" alt="Rise Logo" class="logo">
         <h1>Rise</h1>
         <p class="subtitle">Restaurant Ordering System</p>
@@ -88,10 +84,25 @@
             ITの力で、お店の魅力を最大限に引き出し、お客様との新しいつながりを創造します。
         </p>
         <div class="nav-buttons">
-            <!-- ★★★ パスを修正 ★★★ -->
             <a href="/ROS_manual/manual-admin.html" class="btn btn-admin">管理者様向けマニュアルへ</a>
             <a href="/ROS_manual/manual-staff.html" class="btn btn-staff">店舗スタッフ様向けマニュアルへ</a>
         </div>
     </div>
+
+    <script>
+        // ページが読み込まれてから3秒後に処理を開始
+        setTimeout(() => {
+            const container = document.getElementById('main-container');
+            
+            // コンテナをフェードアウトさせる
+            container.classList.add('fade-out');
+            
+            // フェードアウトのアニメーションが終わるのを待ってから、次のページに移動
+            setTimeout(() => {
+                window.location.href = '/ROS_manual/manual-admin.html';
+            }, 1000); // 1.0秒はCSSのtransitionの時間と合わせる
+
+        }, 3000);
+    </script>
 </body>
 </html>
