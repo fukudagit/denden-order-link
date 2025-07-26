@@ -859,6 +859,12 @@ def serve_root():
 def favicon():
     return '', 204
 
+# --- ここから追記 ---
+@app.route('/ROS_manual/<path:path>')
+def serve_manual_files(path):
+    return send_from_directory('ROS_manual', path)
+# --- ここまで追記 ---
+
 @app.route('/<path:path>')
 def serve_static_file(path):
     if '..' in path: return "Not Found", 404
