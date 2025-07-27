@@ -162,6 +162,7 @@ def login():
         return jsonify({"status": "error", "message": "Invalid username or password"}), 401
 
 # --- API: 顧客向け ---
+
 @app.route('/api/get_opening_settings')
 def get_opening_settings():
     cursor = get_db().cursor(cursor_factory=RealDictCursor)
@@ -171,7 +172,14 @@ def get_opening_settings():
         settings['opening_image_url'] = url_for('static', filename=settings['opening_image_path'], _external=True)
     if settings.get('opening_image_path_2'):
         settings['opening_image_url_2'] = url_for('static', filename=settings['opening_image_path_2'], _external=True)
+    
+    # --- ここから追記 ---
+    # クレジット情報をsettingsに追加
+    settings['credit_text'] = "powered by RISE with Google AI Studio"
+    # --- ここまで追記 ---
+
     return jsonify(settings)
+
 
 @app.route('/api/get_public_store_info')
 def get_public_store_info():

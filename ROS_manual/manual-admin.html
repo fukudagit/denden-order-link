@@ -3,95 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rise 操作マニュアル</title>
+    <title>Rise 導入・設定マニュアル（管理者様向け）</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-            overflow: hidden; 
-        }
-        .container {
-            padding: 40px;
-            max-width: 600px;
-            opacity: 1;
-            /* ★★★ フェードアウトの時間を調整 ★★★ */
-            transition: opacity 1.0s ease-in-out; 
-        }
-        .container.fade-out {
-            opacity: 0;
-        }
-        .logo {
-            /* ★★★ ロゴの初期サイズを大きく ★★★ */
-            width: 250px;
-            height: 250px;
-            border-radius: 50%;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            /* ★★★ 新しい拡大アニメーションを指定 ★★★ */
-            animation: grow-and-zoom 3.0s ease-out forwards;
-        }
-        /* ★★★ 新しい拡大アニメーションの定義 ★★★ */
-        @keyframes grow-and-zoom {
-            from {
-                transform: scale(1); /* 最初は現在の大きさ (1倍) */
-            }
-            to {
-                transform: scale(2); /* 3秒かけて2倍の大きさになる */
-            }
-        }
-        
-        /* 以下、h1やボタンなどのスタイルは変更なし */
-        h1 { font-family: 'Montserrat', sans-serif; font-size: 3.5em; color: #1a237e; margin: 0 0 10px 0; letter-spacing: 1px; }
-        .subtitle { font-family: 'Montserrat', sans-serif; font-size: 1.4em; color: #546e7a; margin-bottom: 30px; }
-        .concept { font-size: 1.1em; line-height: 1.8; color: #444; margin-bottom: 40px; }
-        .nav-buttons { display: flex; flex-direction: column; gap: 15px; }
-        .btn { display: block; padding: 15px 30px; text-decoration: none; color: #fff; border-radius: 8px; font-weight: bold; font-size: 1.1em; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
-        .btn-admin { background-color: #d32f2f; }
-        .btn-staff { background-color: #388e3c; }
+        /* CSSは変更なし */
+        body { font-family: 'Noto Sans JP', sans-serif; line-height: 1.7; color: #333; background-color: #fdfdfd; margin: 0; padding: 0; }
+        header { background-color: #d32f2f; color: white; padding: 20px 40px; text-align: center; }
+        header h1 { margin: 0; font-size: 2em; }
+        header .breadcrumb { margin-top: 10px; }
+        header a { color: #ffcdd2; text-decoration: none; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 8px; }
+        h2 { border-bottom: 2px solid #ef5350; padding-bottom: 10px; margin-top: 40px; font-size: 1.6em; }
+        h3 { border-left: 5px solid #ef5350; padding-left: 10px; font-size: 1.3em; }
+        .screenshot { width: 100%; max-width: 700px; margin: 20px auto; display: block; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .screenshot:hover { transform: scale(1.02); }
+        .important { background-color: #fffde7; border: 1px solid #fff59d; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .overlay img { max-width: 90%; max-height: 90%; }
     </style>
 </head>
 <body>
-    <div class="container" id="main-container">
-        <img src="/images/rise-logo.png" alt="Rise Logo" class="logo">
-        <h1>Rise</h1>
-        <p class="subtitle">Restaurant Ordering System</p>
-        <p class="concept">
-            『Rise』は、地域の小さなお店が、もっと輝くためのお手伝いをするツールです。<br>
-            ITの力で、お店の魅力を最大限に引き出し、お客様との新しいつながりを創造します。
-        </p>
-        <div class="nav-buttons">
-            <a href="/ROS_manual/manual-admin.html" class="btn btn-admin">管理者様向けマニュアルへ</a>
-            <a href="/ROS_manual/manual-staff.html" class="btn btn-staff">店舗スタッフ様向けマニュアルへ</a>
+    <header>
+        <h1>導入・設定マニュアル</h1>
+        <div class="breadcrumb"><a href="manual-cover.html">TOP</a> > 管理者様向け</div>
+    </header>
+    <div class="container">
+        <p>このマニュアルでは、店長・オーナー様ご自身で、お店のメニューを登録したり、設定を変更したりする方法を、一つひとつ丁寧に説明します。</p>
+        
+        <h2 id="admin-login">1. ログインと画面の紹介</h2>
+        <h3>ステップ1：ログインする</h3>
+        <p>提供されたURLからログイン画面を開き、管理者用のIDとパスワードでログインします。</p>
+        <img src="./images/01-login-screen.jpg" alt="ログイン画面" class="screenshot">
+        <h3>ステップ2：「管理者画面」を選択</h3>
+        <p>ログインに成功すると、役割を選ぶ画面が表示されます。一番下の赤いボタン**「管理者画面」**を押してください。</p>
+        <img src="./images/02-role-selection.jpg" alt="役割選択画面" class="screenshot">
+        
+        <h2 id="admin-initial-setup">2. 初期設定：お店の情報を登録しよう</h2>
+        <h3>店舗情報の設定</h3>
+        <p>管理者画面の一番下にある「**店舗情報設定（領収書用）**」で、お店の名前や住所、電話番号を入力します。入力後、**「店舗情報を保存」**ボタンを押してください。</p>
+        <img src="./images/12-admin-store-info.jpg" alt="店舗情報設定" class="screenshot">
+        
+        <h2 id="admin-menu-management">3. メニュー管理：お店の味を世界に届けよう！</h2>
+        <h3>3.1. Excelでかんたん一括登録（推奨）</h3>
+        <p>「**Excelから一括登録 / バックアップ**」セクションの**「現在のメニューとカテゴリー設定をダウンロード」**ボタンを押し、テンプレートとなるExcelファイルをダウンロードします。</p>
+        <img src="./images/14-admin-excel-upload.jpg" alt="Excelアップロードセクション" class="screenshot">
+        <div class="important">
+            <strong>【インバウンド対応のキモ！】</strong><br>
+            「カテゴリー名(English)」や「商品名(英語)」の欄をしっかり入力しておくことで、外国人観光客のお客様が言語を切り替えた際に英語メニューが表示されるようになります。
         </div>
+        <h3>3.2. 登録内容の確認と個別修正</h3>
+        <p>アップロードが成功すると、「カテゴリー管理」や「メニュー一覧」にデータが反映されます。一部だけ修正したい場合は、「修正」ボタンからいつでも個別に編集できます。</p>
+        <img src="./images/16-admin-menu-list.jpg" alt="メニュー一覧" class="screenshot">
     </div>
 
-    <!-- ★★★ 画面遷移のJavaScript ★★★ -->
+    <div class="overlay" id="image-overlay"><img src="" alt="拡大画像" id="overlay-image"></div>
     <script>
-        // ページが読み込まれてから3秒後に処理を開始
-        setTimeout(() => {
-            const container = document.getElementById('main-container');
-            
-            // コンテナをフェードアウトさせる
-            container.classList.add('fade-out');
-            
-            // フェードアウトのアニメーションが終わるのを待ってから、次のページに移動
-            // (1.0秒はCSSのtransitionの時間と合わせる)
-            setTimeout(() => {
-                window.location.href = '/ROS_manual/manual-admin.html';
-            }, 1000);
-
-        }, 3000);
+        const overlay = document.getElementById('image-overlay');
+        const overlayImage = document.getElementById('overlay-image');
+        document.querySelectorAll('.screenshot').forEach(img => {
+            img.addEventListener('click', () => {
+                overlayImage.src = img.src;
+                overlay.style.display = 'flex';
+            });
+        });
+        overlay.addEventListener('click', () => {
+            overlay.style.display = 'none';
+        });
     </script>
 </body>
 </html>

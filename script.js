@@ -30,6 +30,129 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ★★★ APIのベースURLを定義 ★★★
     const API_BASE_URL = 'https://my-order-link.onrender.com/api';
+// ...
+const langEnBtn = document.getElementById('lang-en-btn');
+
+const API_BASE_URL = 'https://my-order-link.onrender.com/api';
+
+// --- ここからまるごと追記・置き換え ---
+async function showOpeningScreen() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
+        if (!response.ok) return Promise.resolve();
+        
+        const settings = await response.json();
+        
+        // ★ ロゴ、画像1、画像2のURLを取得
+        const logoUrl = "/images/rise-logo.png"; // ロゴは固定パスから読み込み
+        const imageUrl1 = settings.opening_image_url;
+        const imageUrl2 = settings.opening_image_url_2;
+        const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
+
+        // ★ 表示するメイン画像(画像1)がない場合は、すぐに終了
+        if (!imageUrl1) {
+            return Promise.resolve();
+        }
+
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.id = 'customer-opening-overlay'; // style.cssで定義したスタイルを適用
+
+            // アニメーションの各ステップの時間（ミリ秒）
+            const logoDuration = 2000;      // ロゴ表示時間
+            const image1Duration = 3000;     // 画像1の表示時間
+            const image2Duration = 3000;     // 画像2の表示時間
+            const fadeDuration = 1500;       // 切り替え時のフェード時間
+
+            // 最初に表示するロゴを作成
+            const logo = document.createElement('img');
+            logo.src = logoUrl;
+            logo.className = 'customer-opening-logo'; // 拡大アニメーション
+
+            const credit = document.createElement('div');
+            credit.className = 'customer-opening-credit';
+            credit.textContent = creditText;
+
+            // まずはロゴとクレジットだけを画面に追加
+            overlay.appendChild(logo);
+            overlay.appendChild(credit);
+            document.body.prepend(overlay);
+
+            // 1. ロゴを2秒間表示
+            setTimeout(() => {
+                // 2. ロゴとクレジットをフェードアウト
+                logo.style.transition = `opacity ${fadeDuration / 1000}s`;
+                credit.style.transition = `opacity ${fadeDuration / 1000}s`;
+                logo.style.opacity = '0';
+                credit.style.opacity = '0';
+
+                // フェードアウトの少し後に背景画像を設定し、オーバーレイ自体をフェードイン
+                setTimeout(() => {
+                    overlay.style.backgroundImage = `url(${imageUrl1})`;
+                    overlay.style.backgroundSize = 'cover';
+                    overlay.style.backgroundPosition = 'center';
+                    // ロゴなどを消す
+                    overlay.innerHTML = ''; 
+
+                    // 3. 画像1を3秒間表示
+                    setTimeout(() => {
+                        // 4. 画像2があれば、画像1から画像2へクロスフェード
+                        if (imageUrl2) {
+                            // 新しいdiv要素を裏に作り、背景画像2を設定
+                            const nextSlide = document.createElement('div');
+                            nextSlide.style.position = 'absolute';
+                            nextSlide.style.top = '0';
+                            nextSlide.style.left = '0';
+                            nextSlide.style.width = '100%';
+                            nextSlide.style.height = '100%';
+                            nextSlide.style.backgroundImage = `url(${imageUrl2})`;
+                            nextSlide.style.backgroundSize = 'cover';
+                            nextSlide.style.backgroundPosition = 'center';
+                            nextSlide.style.opacity = '0';
+                            nextSlide.style.transition = `opacity ${fadeDuration / 1000}s`;
+                            overlay.appendChild(nextSlide);
+
+                            // 少し間を置いてからフェードイン開始
+                            setTimeout(() => {
+                                nextSlide.style.opacity = '1';
+                            }, 100);
+
+                            // 5. 画像2を3秒間表示
+                            setTimeout(() => {
+                                // 6. 最後に全体をフェードアウトして終了
+                                overlay.classList.add('is-closing');
+                                overlay.addEventListener('transitionend', () => {
+                                    if (overlay.parentElement) {
+                                        overlay.remove();
+                                    }
+                                    resolve();
+                                }, { once: true });
+                            }, image2Duration);
+
+                        } else {
+                            // 画像2がない場合は、ここで終了
+                            overlay.classList.add('is-closing');
+                            overlay.addEventListener('transitionend', () => {
+                                if (overlay.parentElement) {
+                                    overlay.remove();
+                                }
+                                resolve();
+                            }, { once: true });
+                        }
+                    }, image1Duration);
+                }, fadeDuration);
+            }, logoDuration);
+        });
+
+    } catch (error) {
+        console.error("オープニング設定の取得または表示エラー:", error);
+        return Promise.resolve();
+    }
+}
+// --- ここまでが追記・置き換え部分 ---
+
+let cart = {};
+// ... (これより下の変数は変更なし)
 
     let cart = {};
     let currentTableId = null;
