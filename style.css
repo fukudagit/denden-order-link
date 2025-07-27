@@ -744,9 +744,10 @@ header {
 }
 .customer-opening-credit {
     position: absolute;
-    bottom: 30px;
+    bottom: 30px; /* ← 現在は、画面の下から30pxの位置 */
     left: 50%;
-    transform: translateX(-50%);
+    /* ... 以下略 ... */
+}    transform: translateX(-50%);
     font-family: 'Montserrat', sans-serif;
     color: rgba(255, 255, 255, 0.8); /* 少しだけ色を濃くして視認性を上げます */
     font-size: 3em; /* ← 3倍のサイズに変更 */
