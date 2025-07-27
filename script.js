@@ -1,6 +1,8 @@
-// script.js (修正済み・最終完全版)
+// script.js (変数重複解消・最終完全版)
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ★★★ 変数定義をこのブロックに全て集約 ★★★
+    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
     const menuContainer = document.getElementById('menu-container');
     const tabContainer = document.querySelector('.category-tabs');
     const callStaffBtn = document.getElementById('call-staff-btn');
@@ -24,135 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartElement = document.querySelector('.cart');
     const cartHeader = document.querySelector('.cart-header h2');
     const cartItemCountBadge = document.getElementById('cart-item-count-badge');
-    
     const langJpBtn = document.getElementById('lang-jp-btn');
     const langEnBtn = document.getElementById('lang-en-btn');
-
-    // ★★★ APIのベースURLを定義 ★★★
-    const API_BASE_URL = 'https://my-order-link.onrender.com/api';
-// ...
-const langEnBtn = document.getElementById('lang-en-btn');
-
-const API_BASE_URL = 'https://my-order-link.onrender.com/api';
-
-// --- ここからまるごと追記・置き換え ---
-async function showOpeningScreen() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
-        if (!response.ok) return Promise.resolve();
-        
-        const settings = await response.json();
-        
-        // ★ ロゴ、画像1、画像2のURLを取得
-        const logoUrl = "/images/rise-logo.png"; // ロゴは固定パスから読み込み
-        const imageUrl1 = settings.opening_image_url;
-        const imageUrl2 = settings.opening_image_url_2;
-        const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
-
-        // ★ 表示するメイン画像(画像1)がない場合は、すぐに終了
-        if (!imageUrl1) {
-            return Promise.resolve();
-        }
-
-        return new Promise(resolve => {
-            const overlay = document.createElement('div');
-            overlay.id = 'customer-opening-overlay'; // style.cssで定義したスタイルを適用
-
-            // アニメーションの各ステップの時間（ミリ秒）
-            const logoDuration = 2000;      // ロゴ表示時間
-            const image1Duration = 3000;     // 画像1の表示時間
-            const image2Duration = 3000;     // 画像2の表示時間
-            const fadeDuration = 1500;       // 切り替え時のフェード時間
-
-            // 最初に表示するロゴを作成
-            const logo = document.createElement('img');
-            logo.src = logoUrl;
-            logo.className = 'customer-opening-logo'; // 拡大アニメーション
-
-            const credit = document.createElement('div');
-            credit.className = 'customer-opening-credit';
-            credit.textContent = creditText;
-
-            // まずはロゴとクレジットだけを画面に追加
-            overlay.appendChild(logo);
-            overlay.appendChild(credit);
-            document.body.prepend(overlay);
-
-            // 1. ロゴを2秒間表示
-            setTimeout(() => {
-                // 2. ロゴとクレジットをフェードアウト
-                logo.style.transition = `opacity ${fadeDuration / 1000}s`;
-                credit.style.transition = `opacity ${fadeDuration / 1000}s`;
-                logo.style.opacity = '0';
-                credit.style.opacity = '0';
-
-                // フェードアウトの少し後に背景画像を設定し、オーバーレイ自体をフェードイン
-                setTimeout(() => {
-                    overlay.style.backgroundImage = `url(${imageUrl1})`;
-                    overlay.style.backgroundSize = 'cover';
-                    overlay.style.backgroundPosition = 'center';
-                    // ロゴなどを消す
-                    overlay.innerHTML = ''; 
-
-                    // 3. 画像1を3秒間表示
-                    setTimeout(() => {
-                        // 4. 画像2があれば、画像1から画像2へクロスフェード
-                        if (imageUrl2) {
-                            // 新しいdiv要素を裏に作り、背景画像2を設定
-                            const nextSlide = document.createElement('div');
-                            nextSlide.style.position = 'absolute';
-                            nextSlide.style.top = '0';
-                            nextSlide.style.left = '0';
-                            nextSlide.style.width = '100%';
-                            nextSlide.style.height = '100%';
-                            nextSlide.style.backgroundImage = `url(${imageUrl2})`;
-                            nextSlide.style.backgroundSize = 'cover';
-                            nextSlide.style.backgroundPosition = 'center';
-                            nextSlide.style.opacity = '0';
-                            nextSlide.style.transition = `opacity ${fadeDuration / 1000}s`;
-                            overlay.appendChild(nextSlide);
-
-                            // 少し間を置いてからフェードイン開始
-                            setTimeout(() => {
-                                nextSlide.style.opacity = '1';
-                            }, 100);
-
-                            // 5. 画像2を3秒間表示
-                            setTimeout(() => {
-                                // 6. 最後に全体をフェードアウトして終了
-                                overlay.classList.add('is-closing');
-                                overlay.addEventListener('transitionend', () => {
-                                    if (overlay.parentElement) {
-                                        overlay.remove();
-                                    }
-                                    resolve();
-                                }, { once: true });
-                            }, image2Duration);
-
-                        } else {
-                            // 画像2がない場合は、ここで終了
-                            overlay.classList.add('is-closing');
-                            overlay.addEventListener('transitionend', () => {
-                                if (overlay.parentElement) {
-                                    overlay.remove();
-                                }
-                                resolve();
-                            }, { once: true });
-                        }
-                    }, image1Duration);
-                }, fadeDuration);
-            }, logoDuration);
-        });
-
-    } catch (error) {
-        console.error("オープニング設定の取得または表示エラー:", error);
-        return Promise.resolve();
-    }
-}
-// --- ここまでが追記・置き換え部分 ---
-
-let cart = {};
-// ... (これより下の変数は変更なし)
 
     let cart = {};
     let currentTableId = null;
@@ -161,141 +36,69 @@ let cart = {};
     let allProductsData = [];
     let allCategoriesData = [];
     let currentLanguage = 'jp';
-    let storeInfo = { name: 'レストラン「My Order LINK」' };
+    let storeInfo = { name: 'レストラン「My Order LINK」' }; 
 
     const translations = {
-        jp: {
-            table: "テーブル番号", checkout: "🧾 会計", call_staff: "🔔 スタッフ呼び出し", menu_loading: "メニューを読み込んでいます...",
-            order_list: "注文リスト", cart_title: "カート (追加する商品)", cart_empty: "カートは空です。", cart_total: "カート合計",
-            yen: "円", items: "品", confirm_order_btn: "注文内容の確認へ", modal_title: "ご注文内容の確認",
-            modal_total_label: "合計金額", modal_back_btn: "戻って編集する", modal_confirm_btn: "この内容で注文を確定する",
-            history_title: "ご注文履歴と会計", history_desc: "これまでのご注文は以下の通りです。", history_total_label: "お会計金額 (合計)",
-            history_note: "お会計を希望される場合は、下のボタンを押してスタッフをお呼びください。", history_close_btn: "閉じる",
-            history_checkout_btn: "会計のためにスタッフを呼ぶ", status_cooking: "調理中", status_ready: "提供待ち", status_served: "提供済み",
-            status_unknown: "不明", add_to_cart: "カートに追加", price_label: "価格", sold_out: "品切れ"
-        },
-        en: {
-            table: "Table No.", checkout: "🧾 Bill", call_staff: "🔔 Call Staff", menu_loading: "Loading menu...",
-            order_list: "Order List", cart_title: "Cart (Items to add)", cart_empty: "Cart is empty.", cart_total: "Cart Total",
-            yen: "JPY", items: "items", confirm_order_btn: "Confirm Order", modal_title: "Confirm Your Order",
-            modal_total_label: "Total Amount", modal_back_btn: "Back to Edit", modal_confirm_btn: "Confirm and Place Order",
-            history_title: "Order History & Bill", history_desc: "Your orders so far are as follows.", history_total_label: "Total Bill Amount",
-            history_note: "If you wish to pay, please press the button below to call a staff member.", history_close_btn: "Close",
-            history_checkout_btn: "Call Staff for Bill", status_cooking: "Cooking", status_ready: "Ready", status_served: "Served",
-            status_unknown: "Unknown", add_to_cart: "Add to Cart", price_label: "Price", sold_out: "Sold Out"
-        }
+        jp: { table: "テーブル番号", checkout: "🧾 会計", call_staff: "🔔 スタッフ呼び出し", menu_loading: "メニューを読み込んでいます...", order_list: "注文リスト", cart_title: "カート (追加する商品)", cart_empty: "カートは空です。", cart_total: "カート合計", yen: "円", items: "品", confirm_order_btn: "注文内容の確認へ", modal_title: "ご注文内容の確認", modal_total_label: "合計金額", modal_back_btn: "戻って編集する", modal_confirm_btn: "この内容で注文を確定する", history_title: "ご注文履歴と会計", history_desc: "これまでのご注文は以下の通りです。", history_total_label: "お会計金額 (合計)", history_note: "お会計を希望される場合は、下のボタンを押してスタッフをお呼びください。", history_close_btn: "閉じる", history_checkout_btn: "会計のためにスタッフを呼ぶ", status_cooking: "調理中", status_ready: "提供待ち", status_served: "提供済み", status_unknown: "不明", add_to_cart: "カートに追加", price_label: "価格", sold_out: "品切れ" },
+        en: { table: "Table No.", checkout: "🧾 Bill", call_staff: "🔔 Call Staff", menu_loading: "Loading menu...", order_list: "Order List", cart_title: "Cart (Items to add)", cart_empty: "Cart is empty.", cart_total: "Cart Total", yen: "JPY", items: "items", confirm_order_btn: "Confirm Order", modal_title: "Confirm Your Order", modal_total_label: "Total Amount", modal_back_btn: "Back to Edit", modal_confirm_btn: "Confirm and Place Order", history_title: "Order History & Bill", history_desc: "Your orders so far are as follows.", history_total_label: "Total Bill Amount", history_note: "If you wish to pay, please press the button below to call a staff member.", history_close_btn: "Close", history_checkout_btn: "Call Staff for Bill", status_cooking: "Cooking", status_ready: "Ready", status_served: "Served", status_unknown: "Unknown", add_to_cart: "Add to Cart", price_label: "Price", sold_out: "Sold Out" }
     };
 
     async function showOpeningScreen() {
         try {
             const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
             if (!response.ok) return Promise.resolve();
-            
             const settings = await response.json();
-            
+            const logoUrl = "/images/rise-logo.png";
             const imageUrl1 = settings.opening_image_url;
             const imageUrl2 = settings.opening_image_url_2;
-            const duration = (parseInt(settings.opening_duration, 10) || 5) * 1000;
-            const effect = settings.opening_effect || 'fade';
-    
-            if (!imageUrl1) {
-                return Promise.resolve();
-            }
+            const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
+            if (!imageUrl1) return Promise.resolve();
     
             return new Promise(resolve => {
                 const overlay = document.createElement('div');
-                overlay.id = 'opening-overlay';
+                overlay.id = 'customer-opening-overlay';
+                const logoDuration = 2000, image1Duration = 3000, image2Duration = 3000, fadeDuration = 1500;
+                const logo = document.createElement('img');
+                logo.src = logoUrl;
+                logo.className = 'customer-opening-logo';
+                const credit = document.createElement('div');
+                credit.className = 'customer-opening-credit';
+                credit.textContent = creditText;
+                overlay.appendChild(logo);
+                overlay.appendChild(credit);
+                document.body.prepend(overlay);
     
-                const slideshowContainer = document.createElement('div');
-                slideshowContainer.className = `slideshow-container effect-${effect}`;
-                slideshowContainer.style.setProperty('--duration', `${duration / 1000}s`);
+                setTimeout(() => {
+                    logo.style.transition = `opacity ${fadeDuration / 1000}s`;
+                    credit.style.transition = `opacity ${fadeDuration / 1000}s`;
+                    logo.style.opacity = '0';
+                    credit.style.opacity = '0';
     
-                const slide1 = document.createElement('div');
-                slide1.className = 'slide slide-1';
-                
-                slideshowContainer.appendChild(slide1);
-                overlay.appendChild(slideshowContainer);
-    
-                if (settings.opening_message) {
-                    const messageContainer = document.createElement('div');
-                    messageContainer.className = 'message-container';
-                    const writingMode = settings.opening_writing_mode || 'horizontal-tb';
-                    messageContainer.classList.add(writingMode);
-                    messageContainer.innerHTML = settings.opening_message.replace(/\n/g, '<br>');
-                    overlay.appendChild(messageContainer);
-                }
-                
-                const preloadImages = (urls) => {
-                    const promises = urls.filter(url => url).map(url => {
-                        return new Promise((res, rej) => {
-                            const img = new Image();
-                            img.onload = res;
-                            img.onerror = rej;
-                            img.src = url;
-                        });
-                    });
-                    return Promise.all(promises);
-                };
-    
-                const imagesToLoad = [imageUrl1];
-                if(imageUrl2) {
-                    imagesToLoad.push(imageUrl2);
-                }
-    
-                preloadImages(imagesToLoad).then(() => {
-                    slide1.style.backgroundImage = `url(${imageUrl1})`;
-                    document.body.prepend(overlay);
-    
-                    if (imageUrl2) {
-                        const slide2 = document.createElement('div');
-                        slide2.className = 'slide slide-2';
-                        slide2.style.backgroundImage = `url(${imageUrl2})`;
-                        slideshowContainer.appendChild(slide2);
+                    setTimeout(() => {
+                        overlay.style.backgroundImage = `url(${imageUrl1})`;
+                        overlay.style.backgroundSize = 'cover';
+                        overlay.style.backgroundPosition = 'center';
+                        overlay.innerHTML = '';
     
                         setTimeout(() => {
-                            switch (effect) {
-                                case 'slide':
-                                    slide1.style.transform = 'translateX(-100%)';
-                                    slide2.style.opacity = '1';
-                                    slide2.style.transform = 'translateX(0)';
-                                    break;
-                                case 'blur':
-                                    slide1.style.opacity = '0';
-                                    slide1.style.filter = 'blur(10px)';
-                                    slide2.style.opacity = '1';
-                                    break;
-                                case 'fade':
-                                case 'dissolve':
-                                default:
-                                    slide1.style.opacity = '0';
-                                    slide2.style.opacity = '1';
-                                    break;
+                            if (imageUrl2) {
+                                const nextSlide = document.createElement('div');
+                                nextSlide.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:url(' + imageUrl2 + ') center/cover;opacity:0;transition:opacity ' + (fadeDuration / 1000) + 's;';
+                                overlay.appendChild(nextSlide);
+                                setTimeout(() => { nextSlide.style.opacity = '1'; }, 100);
+    
+                                setTimeout(() => {
+                                    overlay.classList.add('is-closing');
+                                    overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
+                                }, image2Duration);
+                            } else {
+                                overlay.classList.add('is-closing');
+                                overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
                             }
-                        }, duration);
-    
-                        setTimeout(() => {
-                            overlay.classList.add('is-closing');
-                            overlay.addEventListener('transitionend', () => {
-                                overlay.remove();
-                                resolve();
-                            }, { once: true });
-                        }, duration * 2);
-    
-                    } else {
-                        setTimeout(() => {
-                            overlay.classList.add('is-closing');
-                            overlay.addEventListener('transitionend', () => {
-                                overlay.remove();
-                                resolve();
-                            }, { once: true });
-                        }, duration);
-                    }
-                }).catch(error => {
-                    console.error("オープニング画像の読み込みに失敗しました。", error);
-                    resolve();
-                });
+                        }, image1Duration);
+                    }, fadeDuration);
+                }, logoDuration);
             });
-    
         } catch (error) {
             console.error("オープニング設定の取得または表示エラー:", error);
             return Promise.resolve();
@@ -304,19 +107,12 @@ let cart = {};
 
     async function initializeMenu() {
         try {
-            const [productsRes, categoriesRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/get_products`),
-                fetch(`${API_BASE_URL}/get_categories`)
-            ]);
-            
+            const [productsRes, categoriesRes] = await Promise.all([ fetch(`${API_BASE_URL}/get_products`), fetch(`${API_BASE_URL}/get_categories`) ]);
             if (!productsRes.ok || !categoriesRes.ok) throw new Error('APIからのデータ取得に失敗');
-            
             allProductsData = await productsRes.json();
             allCategoriesData = await categoriesRes.json();
-
             renderCategoryTabs(allCategoriesData);
             renderMenuItems(allProductsData);
-
             filterMenuByCategory('all');
         } catch (error) {
             if (menuContainer) menuContainer.innerHTML = `<p style="text-align:center;">${translations[currentLanguage].menu_loading}</p>`;
@@ -328,10 +124,7 @@ let cart = {};
         if (!currentTableId || !currentAccessToken) return;
         try {
             const res = await fetch(`${API_BASE_URL}/get_order_history/${currentTableId}?token=${currentAccessToken}`);
-            if (!res.ok) {
-                orderHistory = { items: [], total_price: 0 };
-                return;
-            }
+            if (!res.ok) { orderHistory = { items: [], total_price: 0 }; return; }
             orderHistory = await res.json();
         } catch (error) {
             console.error("注文履歴の取得中にエラー:", error);
@@ -339,8 +132,6 @@ let cart = {};
         }
     }
 
-    // ... (この下の関数は変更がないため、元のコードと同じです)
-    
     function updateCartAndTotals() {
         if (!cartItemsList || !cartTotalPriceElement || !cartItemCountBadge) return;
         cartItemsList.innerHTML = '';
@@ -435,15 +226,13 @@ let cart = {};
         div.dataset.price = product.price;
         div.dataset.category = product.category || ''; 
         if (product.is_sold_out) div.classList.add('sold-out');
-        
         const lang = currentLanguage;
         const name = (lang === 'en' && product.name_en) ? product.name_en : product.name;
         const description = (lang === 'en' && product.description_en) ? product.description_en : product.description;
         const priceText = `${translations[lang].price_label}: ${product.price.toLocaleString()}${translations[lang].yen}`;
         const addToCartText = translations[lang].add_to_cart;
-        
-        const imagePath = product.image_path ? `images/${product.image_path}` : 'images/no-image.jpg';
-        div.innerHTML = `<img src="${imagePath}" alt="${name}" onerror="this.src='images/no-image.jpg';"><div class="info"><h3>${name}</h3><p>${priceText}</p><p>${description || ''}</p></div><div class="actions"><div class="quantity-selector"><button class="quantity-btn minus-btn" type="button">-</button><input type="number" class="quantity-input" value="1" min="1"><button class="quantity-btn plus-btn" type="button">+</button></div><button class="add-to-cart-btn" type="button">${addToCartText}</button></div>`;
+        const imagePath = product.image_path ? `/static/images/${product.image_path}` : '/static/images/no-image.jpg';
+        div.innerHTML = `<img src="${imagePath}" alt="${name}" onerror="this.src='/static/images/no-image.jpg';"><div class="info"><h3>${name}</h3><p>${priceText}</p><p>${description || ''}</p></div><div class="actions"><div class="quantity-selector"><button class="quantity-btn minus-btn" type="button">-</button><input type="number" class="quantity-input" value="1" min="1"><button class="quantity-btn plus-btn" type="button">+</button></div><button class="add-to-cart-btn" type="button">${addToCartText}</button></div>`;
         return div;
     }
 
@@ -458,28 +247,23 @@ let cart = {};
     async function handleSendOrder() {
         const items = Object.keys(cart).map(name => ({ name, quantity: cart[name].quantity }));
         if (items.length === 0) return;
-
         try {
             confirmOrderBtn.disabled = true;
             confirmOrderBtn.textContent = '注文中...';
-            
             const response = await fetch(`${API_BASE_URL}/order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tableId: currentTableId, accessToken: currentAccessToken, items })
             });
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ message: `サーバーで問題が発生しました (ステータス: ${response.status})` }));
                 throw new Error(errorData.message || '不明な注文エラーです。');
             }
-
             await response.json();
             cart = {};
             modalOverlay.classList.add('hidden');
             updateCartAndTotals();
             await refreshOrderHistory();
-            
         } catch (error) {
             alert(`注文エラー: ${error.message}`);
         } finally {
@@ -496,7 +280,6 @@ let cart = {};
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ tableId: currentTableId, token: currentAccessToken, call_type: callType }) 
             });
-            
             if (res.ok) {
                 alert(isCheckout ? 'お会計のためにスタッフを呼び出しました。テーブルにてお待ちください。' : 'スタッフを呼び出しました。少々お待ちください。');
                 return true;
@@ -630,24 +413,19 @@ let cart = {};
     async function startApp() {
         if (setupSession()) {
             await showOpeningScreen();
-            
             try {
                 const res = await fetch(`${API_BASE_URL}/get_public_store_info`);
                 if (res.ok) {
                     const data = await res.json();
-                    if(data.store_name) {
-                       storeInfo.name = data.store_name;
-                    }
+                    if(data.store_name) { storeInfo.name = data.store_name; }
                 }
             } catch (e) {
                 console.error("店舗情報の取得に失敗:", e);
             }
-
             setupEventListeners();
             await initializeMenu();
             await refreshOrderHistory();
             updateUILanguage(); 
-            
             setInterval(refreshOrderHistory, 10000); 
         }
     }
