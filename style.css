@@ -743,16 +743,20 @@ header {
     }
 }
 .customer-opening-credit {
-    position: absolute; bottom: 30px; left: 50%;
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
     transform: translateX(-50%);
     font-family: 'Montserrat', sans-serif;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 1em;
+    color: rgba(255, 255, 255, 0.8); /* 少しだけ色を濃くして視認性を上げます */
+    font-size: 3em; /* ← 3倍のサイズに変更 */
+    font-weight: 500; /* 少しだけ太字に */
     letter-spacing: 1px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8); /* 影も少し強くします */
     opacity: 0;
     animation: fade-in-credit 1.5s ease-out 0.5s forwards;
 }
+
 @keyframes fade-in-credit {
     to {
         opacity: 1;
