@@ -713,8 +713,7 @@ header {
 /* --- スマートフォン用のスタイルここまで --- */
 /* --- ここから顧客向けオープニング画面のスタイル --- */
 #customer-opening-overlay {
-    position: fixed;
-    top: 0; left: 0;
+    position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
     background-color: #000;
     z-index: 2000;
@@ -731,12 +730,12 @@ header {
     visibility: hidden;
 }
 .customer-opening-logo {
-    width: 250px;
-    height: 250px;
+    width: 250px; height: 250px;
     border-radius: 50%;
     box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    transform: scale(1);
-    animation: customer-zoom 3.0s ease-out forwards;
+    /* ★アニメーションの開始状態を明確化 */
+    transform: scale(1); 
+    animation: customer-zoom 2.0s ease-out forwards;
 }
 @keyframes customer-zoom {
     100% {
@@ -744,9 +743,7 @@ header {
     }
 }
 .customer-opening-credit {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
+    position: absolute; bottom: 30px; left: 50%;
     transform: translateX(-50%);
     font-family: 'Montserrat', sans-serif;
     color: rgba(255, 255, 255, 0.7);
@@ -754,11 +751,11 @@ header {
     letter-spacing: 1px;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
     opacity: 0;
-    animation: fade-in-credit 1.5s ease-out 1.5s forwards;
+    animation: fade-in-credit 1.5s ease-out 0.5s forwards;
 }
 @keyframes fade-in-credit {
     to {
         opacity: 1;
     }
 }
-/* --- ここまで追記 --- */
+/* --- ここまで --- */

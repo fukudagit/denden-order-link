@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rise 操作マニュアル</title>
+    <!-- ★フォントの読み込み方法を、より互換性の高い@importに変更 -->
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Noto+Sans+JP:wght@400;700&display=swap');
-    </style> 
-    
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Noto+Sans+JP:wght@700&display=swap');
+    </style>
+    <style>
         body {
             font-family: 'Noto Sans JP', sans-serif;
             background-color: #f4f7f6;
@@ -21,11 +22,10 @@
             overflow: hidden; 
         }
         .container {
-            padding: 40px;
-            max-width: 700px;
+            padding: 20px;
+            max-width: 90%; /* 横幅を画面サイズに追従するように変更 */
+            width: 700px; /* PCでの最大幅も指定 */
         }
-        
-        /* ★★★ ロゴとテキストをまとめるセクションを追加 ★★★ */
         .hero-section {
             display: flex;
             flex-direction: column;
@@ -36,8 +36,9 @@
             width: 250px;
             height: 250px;
             border-radius: 50%;
-            margin-bottom: 25px; /* ロゴとテキストの間隔を調整 */
+            margin-bottom: 25px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: scale(1); /* アニメーションの開始状態を明示 */
             animation: zoom-animation 3.5s ease-out forwards;
         }
         @keyframes zoom-animation {
@@ -46,20 +47,28 @@
             }
         }
         
+        /* ★★★ フォントサイズをvw単位に変更し、巨大化 ★★★ */
         h1 {
             font-family: 'Montserrat', sans-serif;
-            /* ★★★ さらにフォントサイズを大きく ★★★ */
-            font-size: 6em; 
+            font-weight: 700;
             color: #1a237e;
             margin: 0;
             letter-spacing: 1px;
+            /* vw単位: 画面の横幅の10%分の大きさ。スマホでもPCでも巨大に表示されます */
+            font-size: 10vw; 
         }
         .subtitle {
             font-family: 'Montserrat', sans-serif;
-            /* ★★★ さらにフォントサイズを大きく ★★★ */
-            font-size: 2em;
+            font-weight: 700;
             color: #546e7a;
             margin-top: 10px;
+            /* vw単位: 画面の横幅の4%分の大きさ */
+            font-size: 4vw;
+        }
+        /* PCなど画面幅が広い場合、文字が大きくなりすぎないように上限を設定 */
+        @media (min-width: 1000px) {
+            h1 { font-size: 100px; }
+            .subtitle { font-size: 40px; }
         }
 
         .concept {
@@ -98,14 +107,11 @@
 </head>
 <body>
     <div class="container" id="main-container">
-
-        <!-- ★★★ ロゴとテキストをdivで囲んで中央揃えに ★★★ -->
         <div class="hero-section">
             <img src="/images/rise-logo.png" alt="Rise Logo" class="logo">
             <h1>Rise</h1>
             <p class="subtitle">Restaurant Ordering System</p>
         </div>
-
         <p class="concept">
             『Rise』は、地域の小さなお店が、もっと輝くためのお手伝いをするツールです。<br>
             ITの力で、お店の魅力を最大限に引き出し、お客様との新しいつながりを創造します。
