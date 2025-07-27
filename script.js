@@ -220,22 +220,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createMenuItemElement(product) {
-        const div = document.createElement('div');
-        div.className = 'menu-item';
-        div.dataset.name = product.name;
-        div.dataset.price = product.price;
-        div.dataset.category = product.category || ''; 
-        if (product.is_sold_out) div.classList.add('sold-out');
+        // ... (この関数の他の部分は変更なし) ...
         const lang = currentLanguage;
         const name = (lang === 'en' && product.name_en) ? product.name_en : product.name;
-        const description = (lang === 'en' && product.description_en) ? product.description_en : product.description;
-        const priceText = `${translations[lang].price_label}: ${product.price.toLocaleString()}${translations[lang].yen}`;
-        const addToCartText = translations[lang].add_to_cart;
-        const imagePath = product.image_path ? `/static/images/${product.image_path}` : '/static/images/no-image.jpg';
-        div.innerHTML = `<img src="${imagePath}" alt="${name}" onerror="this.src='/static/images/no-image.jpg';"><div class="info"><h3>${name}</h3><p>${priceText}</p><p>${description || ''}</p></div><div class="actions"><div class="quantity-selector"><button class="quantity-btn minus-btn" type="button">-</button><input type="number" class="quantity-input" value="1" min="1"><button class="quantity-btn plus-btn" type="button">+</button></div><button class="add-to-cart-btn" type="button">${addToCartText}</button></div>`;
+        // ...
+        
+        // ★★★ この一行を修正 ★★★
+        const imagePath = product.image_path ? `/images/${product.image_path}` : '/images/no-image.jpg';
+        
+        // ★★★ onerrorのパスも修正 ★★★
+        div.innerHTML = `<img src="${imagePath}" alt="${name}" onerror="this.src='/images/no-image.jpg';"><div class="info"><h3>${name}</h3><p>${priceText}</p><p>${description || ''}</p></div><div class="actions"><div class="quantity-selector"><button class="quantity-btn minus-btn" type="button">-</button><input type="number" class="quantity-input" value="1" min="1"><button class="quantity-btn plus-btn" type="button">+</button></div><button class="add-to-cart-btn" type="button">${addToCartText}</button></div>`;
         return div;
     }
-
+    
     function filterMenuByCategory(category) {
         if (!menuContainer) return;
         menuContainer.querySelectorAll('.menu-item').forEach(item => {

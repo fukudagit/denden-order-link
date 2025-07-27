@@ -8,50 +8,109 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; text-align: center; }
-        .container { padding: 40px; max-width: 700px; }
-        .logo { width: 250px; height: 250px; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transform: scale(1); animation: zoom-animation 3.5s ease-out forwards; }
-        @keyframes zoom-animation { 100% { transform: scale(1.5); } }
-        h1 { font-family: 'Montserrat', sans-serif; font-size: 4em; color: #1a237e; margin: 0 0 15px 0; letter-spacing: 1px; }
-        .subtitle { font-family: 'Montserrat', sans-serif; font-size: 1.6em; color: #546e7a; margin-bottom: 35px; }
-        .concept { font-size: 1.2em; line-height: 1.8; color: #444; margin-bottom: 45px; }
-        .nav-buttons { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .btn { display: block; padding: 15px 30px; text-decoration: none; color: #fff; border-radius: 8px; font-weight: bold; font-size: 1.2em; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
-        .btn-admin { background-color: #d32f2f; }
-        .btn-staff { background-color: #388e3c; }
-        .toc { margin-top: 40px; text-align: left; }
-        .toc h3 { font-size: 1.2em; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-        .toc ul { list-style: none; padding-left: 0; }
-        .toc li a { color: #1e88e5; text-decoration: none; line-height: 2; }
-        .toc li a:hover { text-decoration: underline; }
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow: hidden; 
+        }
+        .container {
+            padding: 40px;
+            max-width: 700px;
+        }
+        
+        /* ★★★ ロゴとテキストをまとめるセクションを追加 ★★★ */
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            margin-bottom: 25px; /* ロゴとテキストの間隔を調整 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: zoom-animation 3.5s ease-out forwards;
+        }
+        @keyframes zoom-animation {
+            100% {
+                transform: scale(1.5);
+            }
+        }
+        
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 4em;
+            color: #1a237e;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.6em;
+            color: #546e7a;
+            margin-top: 10px;
+        }
+        
+        .concept {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 45px;
+        }
+        .nav-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .btn {
+            display: block;
+            padding: 15px 30px;
+            text-decoration: none;
+            color: #fff;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .btn-admin {
+            background-color: #d32f2f;
+        }
+        .btn-staff {
+            background-color: #388e3c;
+        }
     </style>
 </head>
 <body>
     <div class="container" id="main-container">
-        <img src="/images/rise-logo.png" alt="Rise Logo" class="logo">
-        <h1>Rise</h1>
-        <p class="subtitle">Restaurant Ordering System</p>
+
+        <!-- ★★★ ロゴとテキストをdivで囲んで中央揃えに ★★★ -->
+        <div class="hero-section">
+            <img src="/images/rise-logo.png" alt="Rise Logo" class="logo">
+            <h1>Rise</h1>
+            <p class="subtitle">Restaurant Ordering System</p>
+        </div>
+
         <p class="concept">
             『Rise』は、地域の小さなお店が、もっと輝くためのお手伝いをするツールです。<br>
             ITの力で、お店の魅力を最大限に引き出し、お客様との新しいつながりを創造します。
         </p>
         <div class="nav-buttons">
-            <a href="manual-admin.html" class="btn btn-admin">管理者様向けマニュアルへ</a>
-            <a href="manual-staff.html" class="btn btn-staff">店舗スタッフ様向けマニュアルへ</a>
-        </div>
-
-        <div class="toc">
-            <h3>もくじ（知りたい項目へジャンプ）</h3>
-            <ul>
-                <li><a href="manual-admin.html#admin-login">管理者向け：ログインと画面の紹介</a></li>
-                <li><a href="manual-admin.html#admin-initial-setup">管理者向け：初期設定</a></li>
-                <li><a href="manual-admin.html#admin-menu-management">管理者向け：メニュー管理</a></li>
-                <li><a href="manual-staff.html#staff-login">スタッフ向け：ログイン</a></li>
-                <li><a href="manual-staff.html#staff-hall">スタッフ向け：ホール担当の操作</a></li>
-                <li><a href="manual-staff.html#staff-kitchen">スタッフ向け：厨房担当の操作</a></li>
-                <li><a href="manual-staff.html#staff-register">スタッフ向け：レジ担当の操作</a></li>
-            </ul>
+            <a href="/ROS_manual/manual-admin.html" class="btn btn-admin">管理者様向けマニュアルへ</a>
+            <a href="/ROS_manual/manual-staff.html" class="btn btn-staff">店舗スタッフ様向けマニュアルへ</a>
         </div>
     </div>
 </body>
