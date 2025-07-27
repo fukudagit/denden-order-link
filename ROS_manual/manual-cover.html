@@ -22,12 +22,7 @@
         }
         .container {
             padding: 40px;
-            max-width: 700px; /* コンテナ自体も少し大きく */
-            opacity: 1;
-            transition: opacity 1.0s ease-in-out; 
-        }
-        .container.fade-out {
-            opacity: 0;
+            max-width: 700px;
         }
         .logo {
             width: 250px;
@@ -35,38 +30,20 @@
             border-radius: 50%;
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            /* ★★★ アニメーションの指定方法を修正 ★★★ */
-            transform: scale(1); /* 初期状態は1倍 */
-            animation: zoom-animation 3.0s ease-out forwards;
+            transform: scale(1);
+            /* ★★★ アニメーションの継続時間を3.0s -> 3.5sに延長 ★★★ */
+            animation: zoom-animation 3.5s ease-out forwards;
         }
-        /* ★★★ アニメーションの定義を修正 ★★★ */
         @keyframes zoom-animation {
             100% {
-                transform: scale(2); /* 3秒かけて2倍の大きさになる */
+                /* ★★★ 拡大率を2倍 -> 1.5倍に調整 ★★★ */
+                transform: scale(1.5); 
             }
         }
         
-        /* ★★★ テキストのフォントサイズを大きく ★★★ */
-        h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 4em; 
-            color: #1a237e;
-            margin: 0 0 15px 0;
-            letter-spacing: 1px;
-        }
-        .subtitle {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.6em;
-            color: #546e7a;
-            margin-bottom: 35px;
-        }
-        .concept {
-            font-size: 1.2em;
-            line-height: 1.8;
-            color: #444;
-            margin-bottom: 45px;
-        }
-        
+        h1 { font-family: 'Montserrat', sans-serif; font-size: 4em; color: #1a237e; margin: 0 0 15px 0; letter-spacing: 1px; }
+        .subtitle { font-family: 'Montserrat', sans-serif; font-size: 1.6em; color: #546e7a; margin-bottom: 35px; }
+        .concept { font-size: 1.2em; line-height: 1.8; color: #444; margin-bottom: 45px; }
         .nav-buttons { display: flex; flex-direction: column; gap: 15px; }
         .btn { display: block; padding: 15px 30px; text-decoration: none; color: #fff; border-radius: 8px; font-weight: bold; font-size: 1.2em; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
@@ -89,20 +66,7 @@
         </div>
     </div>
 
-    <script>
-        // ページが読み込まれてから3秒後に処理を開始
-        setTimeout(() => {
-            const container = document.getElementById('main-container');
-            
-            // コンテナをフェードアウトさせる
-            container.classList.add('fade-out');
-            
-            // フェードアウトのアニメーションが終わるのを待ってから、次のページに移動
-            setTimeout(() => {
-                window.location.href = '/ROS_manual/manual-admin.html';
-            }, 1000); // 1.0秒はCSSのtransitionの時間と合わせる
-
-        }, 3000);
-    </script>
+    <!-- ★★★ 自動画面遷移のJavaScriptを削除しました ★★★ -->
+    
 </body>
 </html>
