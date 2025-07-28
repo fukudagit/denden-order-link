@@ -55,19 +55,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!imageUrl1) return Promise.resolve();
     
             return new Promise(resolve => {
-                const overlay = document.createElement('div');
-                overlay.id = 'customer-opening-overlay';
-                const logoDuration = 2000, image1Duration = 3000, image2Duration = 3000, fadeDuration = 1500;
-                const logo = document.createElement('img');
-                logo.src = logoUrl;
-                logo.className = 'customer-opening-logo';
-                const credit = document.createElement('div');
-                credit.className = 'customer-opening-credit';
-                credit.textContent = creditText;
-                overlay.appendChild(logo);
-                overlay.appendChild(credit);
-                document.body.prepend(overlay);
-    
+const overlay = document.createElement('div');
+overlay.id = 'customer-opening-overlay';
+
+// ★★★ ここからHTML構造を変更 ★★★
+const contentWrapper = document.createElement('div');
+contentWrapper.className = 'opening-content-wrapper';
+
+const logo = document.createElement('img');
+logo.src = logoUrl;
+logo.className = 'customer-opening-logo';
+
+const credit = document.createElement('div');
+credit.className = 'customer-opening-credit';
+credit.textContent = creditText;
+
+// wrapperの中にlogoとcreditを入れる
+contentWrapper.appendChild(logo);
+contentWrapper.appendChild(credit);
+
+// overlayにwrapperを入れる
+overlay.appendChild(contentWrapper);
+document.body.prepend(overlay);
+// ★★★ ここまでHTML構造を変更 ★★★
+
+
                 setTimeout(() => {
                     logo.style.transition = `opacity ${fadeDuration / 1000}s`;
                     credit.style.transition = `opacity ${fadeDuration / 1000}s`;

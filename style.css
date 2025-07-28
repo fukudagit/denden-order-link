@@ -712,6 +712,7 @@ header {
 }
 /* --- スマートフォン用のスタイルここまで --- */
 /* --- ここから顧客向けオープニング画面のスタイル --- */
+/* --- ここから顧客向けオープニング画面のスタイル（最終FIX版） --- */
 #customer-opening-overlay {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
@@ -729,28 +730,33 @@ header {
     opacity: 0;
     visibility: hidden;
 }
-.customer-opening-logo {
-    width: 250px; height: 250px;
-    border-radius: 50%;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    /* ★アニメーションの開始状態を明確化 */
-    transform: scale(1); 
-    animation: customer-zoom 2.0s ease-out forwards;
+
+/* ★★★ ロゴとクレジットをまとめる親要素のスタイル ★★★ */
+.opening-content-wrapper {
+    display: flex;
+    flex-direction: column; /* 要素を縦に並べる */
+    align-items: center;    /* 水平方向の中央揃え */
+    justify-content: center;/* 垂直方向の中央揃え */
+    transform: scale(1);
+    animation: wrapper-zoom 2.0s ease-out forwards;
 }
-@keyframes customer-zoom {
+
+/* wrapper全体を拡大させるアニメーション */
+@keyframes wrapper-zoom {
     100% {
         transform: scale(1.5);
     }
 }
+
+.customer-opening-logo {
+    width: 250px; height: 250px;
+    border-radius: 50%;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
 .customer-opening-credit {
-    /* ★★★ ここから全面的に修正 ★★★ */
-    position: absolute;
-    /* ロゴ（画面中央）を基準にする */
-    top: 50%; 
-    left: 50%;
-    /* ロゴの高さの半分(125px) + 好みの間隔(80px)だけ、下にずらす */
-    transform: translate(-50%, calc(125px + 80px)); 
-    /* ★★★ ここまで全面的に修正 ★★★ */
+    /* ★★★ 位置指定をシンプルに変更 ★★★ */
+    margin-top: 20px; /* ロゴとの間隔を20pxに設定 */
     
     font-family: 'Montserrat', sans-serif;
     color: rgba(255, 255, 255, 0.8);
@@ -761,19 +767,9 @@ header {
     opacity: 0;
     animation: fade-in-credit 1.5s ease-out 0.5s forwards;
 }
-    font-family: 'Montserrat', sans-serif;
-    color: rgba(255, 255, 255, 0.8); /* 少しだけ色を濃くして視認性を上げます */
-    font-size: 3em; /* ← 3倍のサイズに変更 */
-    font-weight: 500; /* 少しだけ太字に */
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8); /* 影も少し強くします */
-    opacity: 0;
-    animation: fade-in-credit 1.5s ease-out 0.5s forwards;
-}
-
 @keyframes fade-in-credit {
     to {
         opacity: 1;
     }
 }
-/* --- ここまで --- */
+/* --- ここまで --- *//* --- ここまで --- */
