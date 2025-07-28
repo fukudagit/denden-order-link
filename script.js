@@ -85,13 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 setTimeout(() => {
                     logoWrapper.classList.remove('active');
-                    slide1.classList.add('active');
+                    slide1.classList.add('active'); // activeクラスでアニメーションと表示を開始
 
                     setTimeout(() => {
                         if (imageUrl2 && overlay.querySelectorAll('.slide').length > 1) {
                             const slides = overlay.querySelectorAll('.slide');
                             slides[0].classList.remove('active');
-                            slides[1].classList.add('active');
+                            slides[1].classList.add('active'); // activeクラスでアニメーションと表示を開始
 
                             setTimeout(() => {
                                 overlay.classList.add('is-closing');
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return Promise.resolve();
         }
     }
-
+    
     async function initializeMenu() {
         try {
             const [productsRes, categoriesRes] = await Promise.all([ fetch(`${API_BASE_URL}/get_products`), fetch(`${API_BASE_URL}/get_categories`) ]);
