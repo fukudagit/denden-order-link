@@ -1,4 +1,4 @@
-// script.js (変数重複解消・最終完全版)
+// script.js (最終診断・完全版)
 
 document.addEventListener('DOMContentLoaded', () => {
     // ★★★ 変数定義をこのブロックに全て集約 ★★★
@@ -43,54 +43,54 @@ document.addEventListener('DOMContentLoaded', () => {
         en: { table: "Table No.", checkout: "🧾 Bill", call_staff: "🔔 Call Staff", menu_loading: "Loading menu...", order_list: "Order List", cart_title: "Cart (Items to add)", cart_empty: "Cart is empty.", cart_total: "Cart Total", yen: "JPY", items: "items", confirm_order_btn: "Confirm Order", modal_title: "Confirm Your Order", modal_total_label: "Total Amount", modal_back_btn: "Back to Edit", modal_confirm_btn: "Confirm and Place Order", history_title: "Order History & Bill", history_desc: "Your orders so far are as follows.", history_total_label: "Total Bill Amount", history_note: "If you wish to pay, please press the button below to call a staff member.", history_close_btn: "Close", history_checkout_btn: "Call Staff for Bill", status_cooking: "Cooking", status_ready: "Ready", status_served: "Served", status_unknown: "Unknown", add_to_cart: "Add to Cart", price_label: "Price", sold_out: "Sold Out" }
     };
 
-        async function showOpeningScreen() {
+    // --- ここからデバッグ版 showOpeningScreen ---
+    async function showOpeningScreen() {
         try {
+            console.log("1. オープニング処理を開始します。");
             const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
-            if (!response.ok) return Promise.resolve();
+            console.log("2. APIからの応答:", response);
+            
+            if (!response.ok) {
+                console.error("3. APIの応答が正常ではありません。オープニングを中断します。");
+                return Promise.resolve();
+            }
+            
             const settings = await response.json();
+            console.log("4. 取得した設定情報:", settings);
             
             const logoUrl = "/images/rise-logo.png";
             const imageUrl1 = settings.opening_image_url;
             const imageUrl2 = settings.opening_image_url_2;
             const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
-            if (!imageUrl1) return Promise.resolve();
-
+    
+            if (!imageUrl1) {
+                console.error("5. 表示画像1が設定されていません。オープニングを中断します。");
+                return Promise.resolve();
+            }
+    
+            console.log("6. 全てのチェックを通過。アニメーションを開始します。");
             return new Promise(resolve => {
                 const overlay = document.createElement('div');
                 overlay.id = 'customer-opening-overlay';
                 
-                // ★ slide1, slide2の定義をここに移動
                 const slide1 = document.createElement('div');
                 slide1.className = 'opening-slide';
                 slide1.style.backgroundImage = `url(${imageUrl1})`;
                 
                 const logoWrapper = document.createElement('div');
                 logoWrapper.className = 'opening-content-wrapper';
-                logoWrapper.innerHTML = `
-                    <img src="${logoUrl}" class="customer-opening-logo" alt="Logo">
-                    <div class="customer-opening-credit">${creditText}</div>
-                `;
+                logoWrapper.innerHTML = `<img src="${logoUrl}" class="customer-opening-logo" alt="Logo"><div class="customer-opening-credit">${creditText}</div>`;
 
-                overlay.appendChild(logoWrapper); // 最初はロゴだけを追加
+                overlay.appendChild(logoWrapper);
                 document.body.prepend(overlay);
 
-                // アニメーションのタイムライン
-                const logoDuration = 2000;
-                const image1Duration = 3000;
-                const image2Duration = 3000;
-                const fadeDuration = 1.5; // 秒
+                const logoDuration = 2000, image1Duration = 3000, image2Duration = 3000, fadeDuration = 1.5;
 
-                // 1. ロゴを2秒表示
                 setTimeout(() => {
-                    // 2. ロゴをフェードアウト
                     logoWrapper.style.opacity = '0';
-                    
-                    // 3. ロゴが消えた後、背景に画像1をセットして、オーバーレイ全体をフェードイン
                     setTimeout(() => {
-                        overlay.innerHTML = ''; // ★ロゴを完全に削除
-                        overlay.appendChild(slide1); // 画像1のスライドを追加
-
-                        // 4. 画像1を3秒表示
+                        overlay.innerHTML = '';
+                        overlay.appendChild(slide1);
                         setTimeout(() => {
                             if (imageUrl2) {
                                 const slide2 = document.createElement('div');
@@ -98,9 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 slide2.style.backgroundImage = `url(${imageUrl2})`;
                                 slide2.style.opacity = '0';
                                 overlay.appendChild(slide2);
-
                                 setTimeout(() => { slide2.style.opacity = '1'; }, 100);
-
                                 setTimeout(() => {
                                     overlay.style.opacity = '0';
                                     overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
@@ -114,11 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, logoDuration);
             });
         } catch (error) {
-            console.error("オープニング設定の取得または表示エラー:", error);
+            console.error("★致命的なエラー発生:", error);
             return Promise.resolve();
         }
     }
-        
+    // --- デバッグ版 showOpeningScreen ここまで ---
+
     async function initializeMenu() {
         try {
             const [productsRes, categoriesRes] = await Promise.all([ fetch(`${API_BASE_URL}/get_products`), fetch(`${API_BASE_URL}/get_categories`) ]);
@@ -234,27 +233,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createMenuItemElement(product) {
-        // ★★★ この行が抜けていました ★★★
         const div = document.createElement('div');
-
         div.className = 'menu-item';
         div.dataset.name = product.name;
         div.dataset.price = product.price;
         div.dataset.category = product.category || ''; 
         if (product.is_sold_out) div.classList.add('sold-out');
-        
         const lang = currentLanguage;
         const name = (lang === 'en' && product.name_en) ? product.name_en : product.name;
         const description = (lang === 'en' && product.description_en) ? product.description_en : product.description;
         const priceText = `${translations[lang].price_label}: ${product.price.toLocaleString()}${translations[lang].yen}`;
         const addToCartText = translations[lang].add_to_cart;
-        
         const imagePath = product.image_path ? `/images/${product.image_path}` : '/images/no-image.jpg';
-        
         div.innerHTML = `<img src="${imagePath}" alt="${name}" onerror="this.src='/images/no-image.jpg';"><div class="info"><h3>${name}</h3><p>${priceText}</p><p>${description || ''}</p></div><div class="actions"><div class="quantity-selector"><button class="quantity-btn minus-btn" type="button">-</button><input type="number" class="quantity-input" value="1" min="1"><button class="quantity-btn plus-btn" type="button">+</button></div><button class="add-to-cart-btn" type="button">${addToCartText}</button></div>`;
         return div;
     }
-        
+
     function filterMenuByCategory(category) {
         if (!menuContainer) return;
         menuContainer.querySelectorAll('.menu-item').forEach(item => {
