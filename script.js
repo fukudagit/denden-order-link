@@ -48,67 +48,64 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
             if (!response.ok) return Promise.resolve();
             const settings = await response.json();
+            
             const logoUrl = "/images/rise-logo.png";
             const imageUrl1 = settings.opening_image_url;
             const imageUrl2 = settings.opening_image_url_2;
             const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
             if (!imageUrl1) return Promise.resolve();
-    
+
             return new Promise(resolve => {
-const overlay = document.createElement('div');
-overlay.id = 'customer-opening-overlay';
+                const overlay = document.createElement('div');
+                overlay.id = 'customer-opening-overlay';
+                
+                const slide1 = document.createElement('div');
+                slide1.className = 'opening-slide';
+                slide1.style.backgroundImage = `url(${imageUrl1})`;
+                
+                const slide2 = document.createElement('div');
+                slide2.className = 'opening-slide';
+                slide2.style.backgroundImage = `url(${imageUrl2})`;
+                slide2.style.opacity = '0'; // 最初は非表示
 
-// ★★★ ここからHTML構造を変更 ★★★
-const contentWrapper = document.createElement('div');
-contentWrapper.className = 'opening-content-wrapper';
+                const logoWrapper = document.createElement('div');
+                logoWrapper.className = 'opening-content-wrapper';
+                logoWrapper.innerHTML = `
+                    <img src="${logoUrl}" class="customer-opening-logo" alt="Logo">
+                    <div class="customer-opening-credit">${creditText}</div>
+                `;
 
-const logo = document.createElement('img');
-logo.src = logoUrl;
-logo.className = 'customer-opening-logo';
+                overlay.appendChild(slide1);
+                if (imageUrl2) overlay.appendChild(slide2);
+                overlay.appendChild(logoWrapper);
+                document.body.prepend(overlay);
 
-const credit = document.createElement('div');
-credit.className = 'customer-opening-credit';
-credit.textContent = creditText;
+                // アニメーションのタイムライン
+                const logoDuration = 2000;
+                const image1Duration = 3000;
+                const image2Duration = 3000;
+                const fadeDuration = 1.5; // 秒
 
-// wrapperの中にlogoとcreditを入れる
-contentWrapper.appendChild(logo);
-contentWrapper.appendChild(credit);
-
-// overlayにwrapperを入れる
-overlay.appendChild(contentWrapper);
-document.body.prepend(overlay);
-// ★★★ ここまでHTML構造を変更 ★★★
-
-
+                // 1. ロゴを2秒表示
                 setTimeout(() => {
-                    logo.style.transition = `opacity ${fadeDuration / 1000}s`;
-                    credit.style.transition = `opacity ${fadeDuration / 1000}s`;
-                    logo.style.opacity = '0';
-                    credit.style.opacity = '0';
-    
+                    // 2. ロゴをフェードアウト
+                    logoWrapper.style.opacity = '0';
+                    // 3. 画像1を3秒表示 (既に表示されている)
                     setTimeout(() => {
-                        overlay.style.backgroundImage = `url(${imageUrl1})`;
-                        overlay.style.backgroundSize = 'cover';
-                        overlay.style.backgroundPosition = 'center';
-                        overlay.innerHTML = '';
-    
-                        setTimeout(() => {
-                            if (imageUrl2) {
-                                const nextSlide = document.createElement('div');
-                                nextSlide.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:url(' + imageUrl2 + ') center/cover;opacity:0;transition:opacity ' + (fadeDuration / 1000) + 's;';
-                                overlay.appendChild(nextSlide);
-                                setTimeout(() => { nextSlide.style.opacity = '1'; }, 100);
-    
-                                setTimeout(() => {
-                                    overlay.classList.add('is-closing');
-                                    overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
-                                }, image2Duration);
-                            } else {
-                                overlay.classList.add('is-closing');
-                                overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
-                            }
-                        }, image1Duration);
-                    }, fadeDuration);
+                        if (imageUrl2) {
+                            // 4. 画像2をフェードイン (ディゾルブ効果)
+                            slide2.style.opacity = '1';
+                            // 5. 画像2を3秒表示
+                            setTimeout(() => {
+                                // 6. 全体をフェードアウト
+                                overlay.style.opacity = '0';
+                                setTimeout(resolve, fadeDuration * 1000);
+                            }, image2Duration);
+                        } else {
+                            overlay.style.opacity = '0';
+                            setTimeout(resolve, fadeDuration * 1000);
+                        }
+                    }, image1Duration);
                 }, logoDuration);
             });
         } catch (error) {
@@ -116,7 +113,7 @@ document.body.prepend(overlay);
             return Promise.resolve();
         }
     }
-
+    
     async function initializeMenu() {
         try {
             const [productsRes, categoriesRes] = await Promise.all([ fetch(`${API_BASE_URL}/get_products`), fetch(`${API_BASE_URL}/get_categories`) ]);
