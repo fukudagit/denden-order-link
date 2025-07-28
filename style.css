@@ -605,7 +605,8 @@ header {
     animation: customer-zoom 2.0s ease-out forwards;
 }
 @keyframes customer-zoom {
-    100% { transform: scale(1.5); }
+    from { transform: scale(1); }
+    to { transform: scale(1.5); }
 }
 
 .customer-opening-credit {

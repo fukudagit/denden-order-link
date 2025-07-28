@@ -1,7 +1,6 @@
-// script.js (最終完全版・省略なし・再送)
+// script.js (最終FIX版・省略なし)
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ★★★ 変数定義をこのブロックに全て集約 ★★★
     const API_BASE_URL = 'https://my-order-link.onrender.com/api';
     const menuContainer = document.getElementById('menu-container');
     const tabContainer = document.querySelector('.category-tabs');
@@ -59,16 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const overlay = document.createElement('div');
                 overlay.id = 'customer-opening-overlay';
                 
+                const logoWrapper = document.createElement('div');
+                logoWrapper.className = 'opening-element logo-container active';
+                logoWrapper.innerHTML = `
+                    <img src="${logoUrl}" class="customer-opening-logo" alt="Logo">
+                    <div class="customer-opening-credit">${creditText}</div>`;
+
                 const slide1 = document.createElement('div');
                 slide1.className = 'opening-element slide';
                 slide1.style.backgroundImage = `url(${imageUrl1})`;
-                
-                const logoWrapper = document.createElement('div');
-                logoWrapper.className = 'opening-element logo-container active';
-                logoWrapper.innerHTML = `<img src="${logoUrl}" class="customer-opening-logo" alt="Logo"><div class="customer-opening-credit">${creditText}</div>`;
 
                 overlay.appendChild(logoWrapper);
                 overlay.appendChild(slide1);
+                
                 if (imageUrl2) {
                     const slide2 = document.createElement('div');
                     slide2.className = 'opening-element slide';
