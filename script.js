@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         en: { table: "Table No.", checkout: "🧾 Bill", call_staff: "🔔 Call Staff", menu_loading: "Loading menu...", order_list: "Order List", cart_title: "Cart (Items to add)", cart_empty: "Cart is empty.", cart_total: "Cart Total", yen: "JPY", items: "items", confirm_order_btn: "Confirm Order", modal_title: "Confirm Your Order", modal_total_label: "Total Amount", modal_back_btn: "Back to Edit", modal_confirm_btn: "Confirm and Place Order", history_title: "Order History & Bill", history_desc: "Your orders so far are as follows.", history_total_label: "Total Bill Amount", history_note: "If you wish to pay, please press the button below to call a staff member.", history_close_btn: "Close", history_checkout_btn: "Call Staff for Bill", status_cooking: "Cooking", status_ready: "Ready", status_served: "Served", status_unknown: "Unknown", add_to_cart: "Add to Cart", price_label: "Price", sold_out: "Sold Out" }
     };
 
-    async function showOpeningScreen() {
+        async function showOpeningScreen() {
         try {
             const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
             if (!response.ok) return Promise.resolve();
@@ -59,15 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const overlay = document.createElement('div');
                 overlay.id = 'customer-opening-overlay';
                 
+                // ★ slide1, slide2の定義をここに移動
                 const slide1 = document.createElement('div');
                 slide1.className = 'opening-slide';
                 slide1.style.backgroundImage = `url(${imageUrl1})`;
                 
-                const slide2 = document.createElement('div');
-                slide2.className = 'opening-slide';
-                slide2.style.backgroundImage = `url(${imageUrl2})`;
-                slide2.style.opacity = '0'; // 最初は非表示
-
                 const logoWrapper = document.createElement('div');
                 logoWrapper.className = 'opening-content-wrapper';
                 logoWrapper.innerHTML = `
@@ -75,9 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="customer-opening-credit">${creditText}</div>
                 `;
 
-                overlay.appendChild(slide1);
-                if (imageUrl2) overlay.appendChild(slide2);
-                overlay.appendChild(logoWrapper);
+                overlay.appendChild(logoWrapper); // 最初はロゴだけを追加
                 document.body.prepend(overlay);
 
                 // アニメーションのタイムライン
@@ -90,22 +84,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     // 2. ロゴをフェードアウト
                     logoWrapper.style.opacity = '0';
-                    // 3. 画像1を3秒表示 (既に表示されている)
+                    
+                    // 3. ロゴが消えた後、背景に画像1をセットして、オーバーレイ全体をフェードイン
                     setTimeout(() => {
-                        if (imageUrl2) {
-                            // 4. 画像2をフェードイン (ディゾルブ効果)
-                            slide2.style.opacity = '1';
-                            // 5. 画像2を3秒表示
-                            setTimeout(() => {
-                                // 6. 全体をフェードアウト
+                        overlay.innerHTML = ''; // ★ロゴを完全に削除
+                        overlay.appendChild(slide1); // 画像1のスライドを追加
+
+                        // 4. 画像1を3秒表示
+                        setTimeout(() => {
+                            if (imageUrl2) {
+                                const slide2 = document.createElement('div');
+                                slide2.className = 'opening-slide';
+                                slide2.style.backgroundImage = `url(${imageUrl2})`;
+                                slide2.style.opacity = '0';
+                                overlay.appendChild(slide2);
+
+                                setTimeout(() => { slide2.style.opacity = '1'; }, 100);
+
+                                setTimeout(() => {
+                                    overlay.style.opacity = '0';
+                                    overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
+                                }, image2Duration);
+                            } else {
                                 overlay.style.opacity = '0';
-                                setTimeout(resolve, fadeDuration * 1000);
-                            }, image2Duration);
-                        } else {
-                            overlay.style.opacity = '0';
-                            setTimeout(resolve, fadeDuration * 1000);
-                        }
-                    }, image1Duration);
+                                overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
+                            }
+                        }, image1Duration);
+                    }, fadeDuration * 1000);
                 }, logoDuration);
             });
         } catch (error) {
@@ -113,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return Promise.resolve();
         }
     }
-    
+        
     async function initializeMenu() {
         try {
             const [productsRes, categoriesRes] = await Promise.all([ fetch(`${API_BASE_URL}/get_products`), fetch(`${API_BASE_URL}/get_categories`) ]);

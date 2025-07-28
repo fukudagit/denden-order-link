@@ -714,52 +714,7 @@ header {
 /* --- ここから顧客向けオープニング画面のスタイル --- */
 /* --- ここから顧客向けオープニング画面のスタイル（最終FIX版） --- */
 /* --- 顧客向けオープニング画面のスタイル（最終FIX版） --- */
-#customer-opening-overlay {
-    position: fixed; top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-color: #000;
-    z-index: 2000;
-    overflow: hidden;
-    opacity: 1;
-    transition: opacity 1.5s ease-in-out;
-}
-.opening-slide {
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-size: cover;
-    background-position: center;
-    transition: opacity 1.5s ease-in-out;
-}
-.opening-content-wrapper {
-    position: relative;
-    z-index: 10;
-    width: 100%; height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    opacity: 1;
-    transition: opacity 1.5s ease-in-out;
-}
-.customer-opening-logo {
-    width: 250px; height: 250px;
-    max-width: 50vw; max-height: 50vh; /* 画面からはみ出ないように上限を設定 */
-    border-radius: 50%;
-    object-fit: contain;
-    animation: customer-zoom 2.0s ease-out forwards;
-}
-@keyframes customer-zoom {
-    100% { transform: scale(1.5); }
-}
-.customer-opening-credit {
-    margin-top: 20px;
-    font-family: 'Montserrat', sans-serif;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 2vw; /* 画面幅に応じてサイズ変更 */
-    max-font-size: 3em; /* 大きくなりすぎないように上限を設定 */
-    font-weight: 500;
-    letter-spacing: 1px;
-    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
+text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
 }
 /* --- ここまで --- */
 
