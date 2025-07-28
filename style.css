@@ -744,7 +744,7 @@ header {
 /* wrapper全体を拡大させるアニメーション */
 @keyframes wrapper-zoom {
     100% {
-        transform: scale(1.5);
+        transform: scale(2.25); /* 1.5倍の、さらに1.5倍 = 2.25倍 */
     }
 }
 
