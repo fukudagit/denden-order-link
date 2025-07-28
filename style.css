@@ -1,4 +1,4 @@
-/* style.css の完全なコード */
+/* style.css (最終完全版・省略なし・再送) */
 
 /* --- グローバル & スムーズスクロール --- */
 html {
@@ -21,8 +21,7 @@ main {
     padding-bottom: 250px;
 }
 
-/* ▼▼▼▼▼ ここからヘッダーのスタイルを全面的に修正 ▼▼▼▼▼ */
-/* --- ヘッダーレイアウト (新デザイン) --- */
+/* --- ヘッダーレイアウト --- */
 header {
     display: flex;
     justify-content: space-between;
@@ -51,7 +50,7 @@ header {
     font-weight: bold;
     color: #555;
     display: flex;
-    align-items: baseline; /* ラベルと番号の底辺を揃える */
+    align-items: baseline;
 }
 
 .header-info p::before {
@@ -61,10 +60,10 @@ header {
 }
 
 .header-info #table-number-value {
-    font-size: 2.2em; /* 数字を特に大きくする */
+    font-size: 2.2em;
     color: #333;
     margin-left: 6px;
-    line-height: 1; /* 行の高さを調整 */
+    line-height: 1;
 }
 
 .header-actions {
@@ -72,7 +71,7 @@ header {
     justify-content: flex-end;
     align-items: center;
     gap: 15px;
-    flex-wrap: wrap; /* ボタンも折り返すように */
+    flex-wrap: wrap;
 }
 
 #call-staff-btn, #checkout-request-btn {
@@ -87,7 +86,6 @@ header {
     transition: background-color 0.2s, transform 0.1s;
     white-space: nowrap;
 }
-/* ... (以降のスタイルは前回のものと同じなので省略しません) ... */
 #call-staff-btn {
     background-color: #f39c12;
 }
@@ -104,10 +102,8 @@ header {
     transform: translateY(1px);
     box-shadow: none;
 }
-/* ▲▲▲▲▲ ここまでヘッダーのスタイルを全面的に修正 ▲▲▲▲▲ */
 
-
-/* --- 接続ステータスのスタイル --- */
+/* --- 接続ステータス --- */
 #connection-status {
     position: sticky; top: 0; width: 100%; padding: 10px 0; text-align: center;
     color: white; font-weight: bold; z-index: 1001; display: none;
@@ -115,7 +111,7 @@ header {
 #connection-status.offline { background-color: #e74c3c; display: block; }
 #connection-status.online { background-color: #27ae60; display: block; }
 
-/* --- カテゴリタブのスタイル --- */
+/* --- カテゴリタブ --- */
 .category-tabs { 
     margin-bottom: 20px; 
     border-bottom: 2px solid #ddd; 
@@ -145,7 +141,7 @@ header {
     background-color: #e0e0e0; 
 }
 
-/* --- 各メニュー項目の基本スタイル --- */
+/* --- メニュー項目 --- */
 .menu-item { 
     background-color: #ffffff; 
     border: 1px solid #dddddd; 
@@ -227,7 +223,7 @@ header {
     background-color: #e67e22; 
 }
 
-/* --- 注文リスト（カート）のスタイル --- */
+/* --- カート --- */
 .cart {
     position: fixed;
     bottom: 20px;
@@ -344,7 +340,7 @@ header {
     cursor: not-allowed; 
 }
 
-/* --- ポップアップ（モーダル）のスタイル --- */
+/* --- モーダル --- */
 #modal-overlay, #history-modal-overlay { 
     position: fixed; 
     top: 0; 
@@ -369,7 +365,7 @@ header {
     margin-top: 0; 
     color: #2980b9; 
 }
-#modal-cart-items { 
+#modal-cart-items, .modal-cart-items-history { 
     max-height: 40vh; 
     overflow-y: auto; 
     margin-bottom: 20px; 
@@ -534,97 +530,6 @@ header {
     background-color: #e0e0e0;
 }
 
-/* --- オープニング画面のスタイル --- */
-#opening-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background-color: #000;
-    z-index: 2000;
-    overflow: hidden;
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-#opening-overlay.is-closing {
-    opacity: 0;
-    visibility: hidden;
-}
-
-.slideshow-container {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-}
-
-.slide {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    animation: cinematic-zoom calc(var(--duration) * 2) ease-out forwards;
-    transition: opacity 1.5s ease-in-out, filter 1.5s ease-in-out, transform 1.5s ease-in-out;
-}
-
-.slide-1 {
-    opacity: 1;
-}
-.slide-2 {
-    opacity: 0;
-}
-
-.slideshow-container.effect-slide .slide-2 {
-    transform: translateX(100%);
-}
-
-.message-container {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    background-color: transparent; /* 背景は透明のまま */
-    color: #fff; /* 文字色は白 */
-    padding: 20px 30px;
-    border-radius: 8px;
-    font-weight: bold;
-    max-width: 80%;
-    text-align: center;
-    line-height: 1.6;
-    /* ★★★ ここを修正 ★★★ */
-    /* text-shadowを使って、上下左右に黒い影を配置し、縁取りのように見せる */
-    text-shadow:
-        -2px -2px 0 #000,
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000,
-        -2px  0   0 #000,
-         2px  0   0 #000,
-         0   -2px 0 #000,
-         0    2px 0 #000;
-    /* ★★★ ここまで修正 ★★★ */
-    opacity: 0;
-    animation: message-fade-in 1.5s ease-out 0.5s forwards;
-}
-
-@keyframes cinematic-zoom {
-    from { transform: scale(1); }
-    to   { transform: scale(1.1); }
-}
-@keyframes message-fade-in {
-    to { opacity: 1; }
-}
-
-.message-container.horizontal-tb { font-size: 2.2em; }
-.message-container.vertical-rl {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    font-size: 2.2em;
-    padding: 30px 20px;
-    max-height: 80vh;
-}
-
 /* --- レスポンシブ対応 (スマートフォン向け) --- */
 @media (max-width: 768px) {
     body > header, body > main, body > footer {
@@ -633,19 +538,19 @@ header {
     }
 
     header {
-        justify-content: space-between; /* 狭い画面でも両端揃えを維持 */
+        justify-content: space-between;
     }
 
     .header-info {
-       text-align: left; /* 左揃えに戻す */
+       text-align: left;
     }
 
     .header-info, .header-actions {
-        width: auto; /* 幅を自動に */
+        width: auto;
     }
 
     .header-actions {
-       justify-content: flex-end; /* 右揃えに戻す */
+       justify-content: flex-end;
     }
     
     .cart {
@@ -656,71 +561,61 @@ header {
     }
 }
 
-/* --- ここからスマートフォン用のスタイルを追加 --- */
-
-/* 画面幅が768px以下の場合に適用 */
-@media (max-width: 768px) {
-
-    /* オープニング画面の文字サイズを調整 */
-    .message-container.horizontal-tb,
-    .message-container.vertical-rl {
-        font-size: 1.5em; /* PC用の2.2emからサイズダウン */
-        padding: 15px 20px;
-    }
-
-    /* ヘッダーのデザインをスマホ向けに調整 */
-    header {
-        padding: 10px 15px;
-        flex-direction: column; /* 要素を縦並びにする */
-        align-items: flex-start; /* 左揃えにする */
-        gap: 10px;
-    }
-    .header-info, .header-actions {
-        width: 100%; /* 横幅いっぱいに広げる */
-    }
-    .header-actions {
-        justify-content: space-between; /* ボタンを両端に配置 */
-    }
-    #call-staff-btn, #checkout-request-btn {
-        padding: 10px 15px;
-        font-size: 0.9em;
-    }
-
-    /* メニュー項目のレイアウトをスマホ向けに調整 */
-    .menu-item {
-        flex-direction: column; /* 要素を縦並びにする */
-        align-items: flex-start; /* 左揃えにする */
-        gap: 10px;
-    }
-    .menu-item img {
-        width: 100%; /* 画像を横幅いっぱいに表示 */
-        height: 180px; /* 高さを固定 */
-        object-fit: cover;
-    }
-    .menu-item .actions {
-        width: 100%; /* 数量セレクタとボタンを横幅いっぱいに */
-        justify-content: space-between; /* 数量セレクタとボタンを両端に */
-    }
-
-    /* カート（注文リスト）の位置とサイズを調整 */
-    .cart {
-        width: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-    }
-}
-/* --- スマートフォン用のスタイルここまで --- */
-/* --- ここから顧客向けオープニング画面のスタイル --- */
-/* --- ここから顧客向けオープニング画面のスタイル（最終FIX版） --- */
 /* --- 顧客向けオープニング画面のスタイル（最終FIX版） --- */
-text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
+#customer-opening-overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-color: #000;
+    z-index: 2000;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 1.5s ease-in-out, visibility 1.5s ease-in-out;
+}
+#customer-opening-overlay.is-closing {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.opening-element {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+.opening-element.active {
+    opacity: 1;
+}
+
+.opening-element.slide {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.customer-opening-logo {
+    width: 250px; height: 250px;
+    max-width: 50vw; max-height: 50vh;
+    border-radius: 50%;
+    object-fit: contain;
+    animation: customer-zoom 2.0s ease-out forwards;
+}
+@keyframes customer-zoom {
+    100% { transform: scale(1.5); }
+}
+
+.customer-opening-credit {
+    margin-top: 20px;
+    font-family: 'Montserrat', sans-serif;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 2vw;
+    max-font-size: 3em;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
 }
 /* --- ここまで --- */
-
-@keyframes fade-in-credit {
-    to {
-        opacity: 1;
-    }
-}
-/* --- ここまで --- *//* --- ここまで --- */

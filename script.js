@@ -1,4 +1,4 @@
-// script.js (最終診断・完全版)
+// script.js (最終完全版・省略なし・再送)
 
 document.addEventListener('DOMContentLoaded', () => {
     // ★★★ 変数定義をこのブロックに全て集約 ★★★
@@ -43,80 +43,71 @@ document.addEventListener('DOMContentLoaded', () => {
         en: { table: "Table No.", checkout: "🧾 Bill", call_staff: "🔔 Call Staff", menu_loading: "Loading menu...", order_list: "Order List", cart_title: "Cart (Items to add)", cart_empty: "Cart is empty.", cart_total: "Cart Total", yen: "JPY", items: "items", confirm_order_btn: "Confirm Order", modal_title: "Confirm Your Order", modal_total_label: "Total Amount", modal_back_btn: "Back to Edit", modal_confirm_btn: "Confirm and Place Order", history_title: "Order History & Bill", history_desc: "Your orders so far are as follows.", history_total_label: "Total Bill Amount", history_note: "If you wish to pay, please press the button below to call a staff member.", history_close_btn: "Close", history_checkout_btn: "Call Staff for Bill", status_cooking: "Cooking", status_ready: "Ready", status_served: "Served", status_unknown: "Unknown", add_to_cart: "Add to Cart", price_label: "Price", sold_out: "Sold Out" }
     };
 
-    // --- ここからデバッグ版 showOpeningScreen ---
     async function showOpeningScreen() {
         try {
-            console.log("1. オープニング処理を開始します。");
             const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
-            console.log("2. APIからの応答:", response);
-            
-            if (!response.ok) {
-                console.error("3. APIの応答が正常ではありません。オープニングを中断します。");
-                return Promise.resolve();
-            }
-            
+            if (!response.ok) return Promise.resolve();
             const settings = await response.json();
-            console.log("4. 取得した設定情報:", settings);
             
             const logoUrl = "/images/rise-logo.png";
             const imageUrl1 = settings.opening_image_url;
             const imageUrl2 = settings.opening_image_url_2;
             const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
-    
-            if (!imageUrl1) {
-                console.error("5. 表示画像1が設定されていません。オープニングを中断します。");
-                return Promise.resolve();
-            }
-    
-            console.log("6. 全てのチェックを通過。アニメーションを開始します。");
+            if (!imageUrl1) return Promise.resolve();
+
             return new Promise(resolve => {
                 const overlay = document.createElement('div');
                 overlay.id = 'customer-opening-overlay';
                 
                 const slide1 = document.createElement('div');
-                slide1.className = 'opening-slide';
+                slide1.className = 'opening-element slide';
                 slide1.style.backgroundImage = `url(${imageUrl1})`;
                 
                 const logoWrapper = document.createElement('div');
-                logoWrapper.className = 'opening-content-wrapper';
+                logoWrapper.className = 'opening-element logo-container active';
                 logoWrapper.innerHTML = `<img src="${logoUrl}" class="customer-opening-logo" alt="Logo"><div class="customer-opening-credit">${creditText}</div>`;
 
                 overlay.appendChild(logoWrapper);
+                overlay.appendChild(slide1);
+                if (imageUrl2) {
+                    const slide2 = document.createElement('div');
+                    slide2.className = 'opening-element slide';
+                    slide2.style.backgroundImage = `url(${imageUrl2})`;
+                    overlay.appendChild(slide2);
+                }
                 document.body.prepend(overlay);
 
-                const logoDuration = 2000, image1Duration = 3000, image2Duration = 3000, fadeDuration = 1.5;
+                const logoDuration = 2000;
+                const image1Duration = 3000;
+                const image2Duration = 3000;
 
                 setTimeout(() => {
-                    logoWrapper.style.opacity = '0';
+                    logoWrapper.classList.remove('active');
+                    slide1.classList.add('active');
+
                     setTimeout(() => {
-                        overlay.innerHTML = '';
-                        overlay.appendChild(slide1);
-                        setTimeout(() => {
-                            if (imageUrl2) {
-                                const slide2 = document.createElement('div');
-                                slide2.className = 'opening-slide';
-                                slide2.style.backgroundImage = `url(${imageUrl2})`;
-                                slide2.style.opacity = '0';
-                                overlay.appendChild(slide2);
-                                setTimeout(() => { slide2.style.opacity = '1'; }, 100);
-                                setTimeout(() => {
-                                    overlay.style.opacity = '0';
-                                    overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
-                                }, image2Duration);
-                            } else {
-                                overlay.style.opacity = '0';
+                        if (imageUrl2 && overlay.querySelectorAll('.slide').length > 1) {
+                            const slides = overlay.querySelectorAll('.slide');
+                            slides[0].classList.remove('active');
+                            slides[1].classList.add('active');
+
+                            setTimeout(() => {
+                                overlay.classList.add('is-closing');
                                 overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
-                            }
-                        }, image1Duration);
-                    }, fadeDuration * 1000);
+                            }, image2Duration);
+
+                        } else {
+                            overlay.classList.add('is-closing');
+                            overlay.addEventListener('transitionend', () => { if (overlay.parentElement) overlay.remove(); resolve(); }, { once: true });
+                        }
+                    }, image1Duration);
                 }, logoDuration);
             });
         } catch (error) {
-            console.error("★致命的なエラー発生:", error);
+            console.error("オープニング設定の取得または表示エラー:", error);
             return Promise.resolve();
         }
     }
-    // --- デバッグ版 showOpeningScreen ここまで ---
 
     async function initializeMenu() {
         try {
