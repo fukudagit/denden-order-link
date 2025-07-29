@@ -1,27 +1,21 @@
-// kitchen.js (最終版)
+// kitchen.js (最終版・全システム終了機能付き)
+
 document.addEventListener('DOMContentLoaded', () => {
-      // --- ここから追記 ---
-    // 管理者からのシステム終了通知を監視
+    // ★★★ 管理者からのシステム終了通知を監視 ★★★
     window.addEventListener('storage', (event) => {
         if (event.key === 'system_shutdown_request') {
-            // 他のタブでシステム終了が要求されたら、即座にログアウトする
             localStorage.removeItem('staff_token');
             alert('管理者によってシステムが終了されました。ログイン画面に戻ります。');
             window.location.href = '/login.html';
         }
     });
-    // --- ここまで追記 ---
 
-    const token = localStorage.getItem('staff_token');
-    // ... (以下、既存のコード)
-    
     const token = localStorage.getItem('staff_token');
     if (!token) {
         window.location.href = '/login.html';
         return;
     }
 
-    // ★★★ APIのベースURLを本番環境用に修正 ★★★
     const API_BASE_URL = 'https://my-order-link.onrender.com/api';
 
     document.querySelector('head').innerHTML += '<link rel="stylesheet" href="kitchen.css">';
