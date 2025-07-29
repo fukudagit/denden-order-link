@@ -1,16 +1,41 @@
-// hall.js (修正済み・最終完全版)
+// hall.js (最終版・全システム終了機能付き)
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ★★★ 管理者からのシステム終了通知を監視 ★★★
+    window.addEventListener('storage', (event) => {
+        // システム終了リクエストが来たら、即座にログアウト
+        if (event.key === 'system_shutdown_request') {
+            localStorage.removeItem('staff_token');
+            alert('管理者によってシステムが終了されました。ログイン画面に戻ります。');
+            window.location.href = '/login.html';
+            return; // これ以降の処理は不要
+        }
+
+        // 会計完了通知が来たら、該当テーブルのクリアボタンを点滅させる
+        if (event.key === 'last_checked_out_table' && event.newValue) {
+            try {
+                const { tableId } = JSON.parse(event.newValue);
+                if (tableId) {
+                    const clearBtn = document.querySelector(`.table-card-item[data-table-id='${tableId}'] .clear-table-btn`);
+                    if (clearBtn) clearBtn.classList.add('blinking');
+                    const callCardToRemove = document.querySelector(`.call-card button[data-table-id='${tableId}']`)?.closest('.call-card');
+                    if (callCardToRemove) callCardToRemove.remove();
+                }
+            } catch (e) {
+                console.error("localStorageの通知データの解析に失敗しました:", e);
+            }
+        }
+    });
+
     const token = localStorage.getItem('staff_token');
     if (!token) {
         window.location.href = '/login.html';
         return;
     }
 
-    // ★★★ APIのベースURLを本番環境用に修正 ★★★
     const API_BASE_URL = 'https://my-order-link.onrender.com/api';
 
-    document.querySelector('head').innerHTML += '<link rel="stylesheet" href="hall.css?v=2.0">'; // キャッシュ対策
+    document.querySelector('head').innerHTML += '<link rel="stylesheet" href="hall.css">';
     const appContainer = document.getElementById('app-container');
     appContainer.innerHTML = `
         <header><h1>ホールスタッフ用画面</h1></header>
@@ -165,7 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const header = document.createElement('div');
         header.className = 'order-group-header';
-        header.innerHTML = `<span>テーブル ${tableId}</span>`;
+        const span = document.createElement('span');
+        span.textContent = `テーブル ${tableId}`;
+        header.appendChild(span);
 
         if (isCalling) {
             header.innerHTML += `<button class="resolve-call-btn" data-table-id="${tableId}">呼び出し対応</button>`;
@@ -186,7 +213,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'item-card';
         card.dataset.itemId = item.id;
-        card.innerHTML = `<div class="item-details"><span class="item-name">${item.item_name}</span> (数量: ${item.quantity})</div>`;
+        const details = document.createElement('div');
+        details.className = 'item-details';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'item-name';
+        nameSpan.textContent = item.item_name;
+        details.appendChild(nameSpan);
+        details.append(` (数量: ${item.quantity})`);
+        card.appendChild(details);
         return card;
     }
 
@@ -221,14 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
         card.className = 'table-card-item';
         card.dataset.tableId = tableId;
         card.innerHTML = `<div class="card-header"><h3>テーブル ${tableId}</h3></div><div class="table-card-actions"><button class="action-btn clear-table-btn" type="button">テーブルクリア</button><button class="action-btn qr-show-btn" type="button">QR表示</button><a href="${orderUrl}" class="action-btn proxy-order-btn" target="_blank" rel="noopener noreferrer">代行注文</a></div>`;
-        
         card.querySelector('.qr-show-btn').addEventListener('click', () => {
             qrModalTitle.textContent = `テーブル ${tableId} 用QRコード`;
             qrCodeContainer.innerHTML = '';
             new QRCode(qrCodeContainer, { text: orderUrl, width: 256, height: 256 });
             qrModalOverlay.classList.remove('hidden');
         });
-
         card.querySelector('.clear-table-btn').addEventListener('click', (event) => {
             event.stopPropagation();
             if (confirm(`テーブル ${tableId} のカードを画面から消しますか？\n(この操作は元に戻せません)`)) {
@@ -241,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         return card;
     }
-
     function setupEventListeners() {
         addTableBtn.addEventListener('click', async () => {
             const tableId = tableNumberInput.value;
@@ -266,22 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'last_checked_out_table' && event.newValue) {
-                try {
-                    const { tableId } = JSON.parse(event.newValue);
-                    if (tableId) {
-                        const clearBtn = document.querySelector(`.table-card-item[data-table-id='${tableId}'] .clear-table-btn`);
-                        if (clearBtn) clearBtn.classList.add('blinking');
-                        const callCardToRemove = document.querySelector(`.call-card button[data-table-id='${tableId}']`)?.closest('.call-card');
-                        if (callCardToRemove) callCardToRemove.remove();
-                    }
-                } catch (e) {
-                    console.error("localStorageの通知データの解析に失敗しました:", e);
-                }
-            }
-        });
-
         document.body.addEventListener('click', async (event) => {
             const target = event.target;
             if (target.classList.contains('resolve-call-btn')) {
@@ -296,51 +311,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-
             if (target.classList.contains('clear-table-btn') && target.classList.contains('blinking')) {
                 target.classList.remove('blinking');
             }
-
             const itemId = target.dataset.itemId;
             if (!itemId) return;
-
-            let endpoint = '';
-            let body = null;
-
+            let url, body, needsRefresh = false;
             if (target.classList.contains('quantity-change-btn')) {
-                const currentQuantityText = target.closest('.item-card').querySelector('.item-details').textContent;
-                const match = currentQuantityText.match(/数量: (\d+)/);
-                if (!match) return;
-
-                const currentQuantity = parseInt(match[1]);
+                const currentQuantity = parseInt(target.closest('.item-card').querySelector('.item-details').textContent.match(/数量: (\d+)/)[1]);
                 const change = parseInt(target.dataset.change);
                 const newQuantity = currentQuantity + change;
-
                 if (newQuantity > 0) {
-                    endpoint = `/update_item_quantity/${itemId}`;
-                    body = { quantity: newQuantity };
+                    url = `/update_item_quantity/${itemId}`; body = { quantity: newQuantity }; needsRefresh = true;
                 } else if (confirm('数量が0になります。商品をキャンセルしますか？')) {
-                    endpoint = `/cancel_item/${itemId}`;
+                    url = `/cancel_item/${itemId}`; needsRefresh = true;
                 }
             } else if (target.classList.contains('cancel-btn')) {
                 if (confirm('この商品を本当にキャンセルしますか？')) {
-                    endpoint = `/cancel_item/${itemId}`;
+                    url = `/cancel_item/${itemId}`; needsRefresh = true;
                 }
             } else if (target.classList.contains('serve-btn')) {
-                endpoint = `/update_item_status/${itemId}`;
-                body = { status: 'served' };
+                url = `/update_item_status/${itemId}`; body = { status: 'served' }; needsRefresh = true;
             }
-
-            if (endpoint) {
+            if (needsRefresh) {
                 try {
-                    const res = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, { 
-                        method: 'POST', 
-                        body: body ? JSON.stringify(body) : null 
-                    });
+                    const res = await authenticatedFetch(`${API_BASE_URL}${url}`, { method: 'POST', body: body ? JSON.stringify(body) : null });
                     if (res && res.ok) {
                         refreshHallView();
                     } else {
-                        const errText = res ? await res.text() : 'No response from server.';
+                        const errText = await res.text();
                         try {
                             alert(`操作失敗: ${JSON.parse(errText).message}`);
                         } catch {
@@ -353,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-
         closeQrModalBtn.addEventListener('click', () => qrModalOverlay.classList.add('hidden'));
         qrModalOverlay.addEventListener('click', (event) => {
             if (event.target === qrModalOverlay) qrModalOverlay.classList.add('hidden');

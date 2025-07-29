@@ -1,4 +1,4 @@
-// admin.js (修正済み・全体)
+// admin.js (最終版・全システム終了機能付き)
 
 document.addEventListener('DOMContentLoaded', () => {
     const STAFF_TOKEN = localStorage.getItem('staff_token');
@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // ★★★ ここを本番環境のURLに修正しました ★★★
     const API_BASE_URL = 'https://my-order-link.onrender.com/api';
     
     const adminCategoryTabs = document.getElementById('admin-category-tabs');
@@ -168,8 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadProducts() {
         try {
-            // ★★★ ここは認証不要なAPIなのでAPI_BASE_URLを直接使わない ★★★
-            const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/get_products`);
+            const response = await fetch(`${API_BASE_URL}/get_products`);
             allProducts = await response.json();
             productsTableBody.innerHTML = '';
             allProducts.forEach(product => {
@@ -195,10 +193,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function openEditModal(productId) {
+        const productToEdit = allProducts.find(p => p.id === productId);
+        if (!productToEdit) return;
+        editIdInput.value = productToEdit.id;
+        document.getElementById('edit-name').value = productToEdit.name;
+        document.getElementById('edit-price').value = productToEdit.price;
+        document.getElementById('edit-description').value = productToEdit.description || '';
+        document.getElementById('edit-image').value = productToEdit.image_path || '';
+        document.getElementById('edit-name-en').value = productToEdit.name_en || '';
+        document.getElementById('edit-description-en').value = productToEdit.description_en || '';
+
+        const productCategoryIds = new Set((productToEdit.categories || []).map(c => c.id));
+        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = productCategoryIds.has(parseInt(checkbox.value, 10));
+        });
+
+        editModalOverlay.classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        editModalOverlay.classList.add('hidden');
+        editForm.reset();
+        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+    
     async function loadOpeningSettings() {
         try {
-            // ★★★ ここも認証不要なAPI ★★★
-            const response = await fetch(`${API_BASE_URL.replace('/api', '')}/api/get_opening_settings`);
+            const response = await fetch(`${API_BASE_URL}/get_opening_settings`);
             const settings = await response.json();
             openingMessageInput.value = settings.opening_message || '';
             document.querySelector(`input[name="writing_mode"][value="${settings.opening_writing_mode || 'horizontal-tb'}"]`).checked = true;
@@ -232,75 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteQrCodeBtn.classList.add('hidden');
             }
         } catch (error) { console.error('店舗情報読み込みエラー:', error); }
-    }
-
-    // --- 省略: renderSalesData, updateSortButtons, openEditModal, closeEditModal などの変更のない関数 ---
-
-    adminCategoryTabs.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            const selectedCategoryId = e.target.dataset.categoryId;
-            adminCategoryTabs.querySelector('.active').classList.remove('active');
-            e.target.classList.add('active');
-            filterAdminProductsByCategory(selectedCategoryId);
-        }
-    });
-    
-    uploadBtn.addEventListener('click', async () => {
-        const file = menuFileInput.files[0];
-        if (!file) return alert('ファイルを選択してください。');
-        if (!confirm('本当にアップロードしますか？既存のカテゴリーとメニューは全て上書きされます。')) return;
-        const formData = new FormData();
-        formData.append('menu_file', file);
-        try {
-            const response = await authenticatedAPIFetch(`${API_BASE_URL}/admin/upload_menu`, { method: 'POST', body: formData });
-            const result = await response.json();
-            alert(result.message);
-            init();
-            menuFileInput.value = '';
-        } catch (error) {
-            alert(`アップロードに失敗: ${error.message}`);
-        }
-    });
-    
-    // --- 省略: 他のイベントリスナー ---
-    
-    // 初期化処理
-    async function init() {
-        await loadCategories();
-        await loadProducts();
-        await loadOpeningSettings();
-        await loadStoreInfo();
-    }
-    
-    init();
-    
-    // --- ここから下に、変更のなかった他の関数やイベントリスナーのコードが続きます ---
-    // (完全を期すため、元のファイルの残りの部分をここに貼り付けます)
-    function openEditModal(productId) {
-        const productToEdit = allProducts.find(p => p.id === productId);
-        if (!productToEdit) return;
-        editIdInput.value = productToEdit.id;
-        document.getElementById('edit-name').value = productToEdit.name;
-        document.getElementById('edit-price').value = productToEdit.price;
-        document.getElementById('edit-description').value = productToEdit.description || '';
-        document.getElementById('edit-image').value = productToEdit.image_path || '';
-        document.getElementById('edit-name-en').value = productToEdit.name_en || '';
-        document.getElementById('edit-description-en').value = productToEdit.description_en || '';
-
-        const productCategoryIds = new Set((productToEdit.categories || []).map(c => c.id));
-        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = productCategoryIds.has(parseInt(checkbox.value, 10));
-        });
-
-        editModalOverlay.classList.remove('hidden');
-    }
-
-    function closeEditModal() {
-        editModalOverlay.classList.add('hidden');
-        editForm.reset();
-        editCategoryContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
     }
     
     function renderSalesData() {
@@ -522,6 +477,22 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`ダウンロードに失敗: ${error.message}`);
         }
     });
+    uploadBtn.addEventListener('click', async () => {
+        const file = menuFileInput.files[0];
+        if (!file) return alert('ファイルを選択してください。');
+        if (!confirm('本当にアップロードしますか？既存のカテゴリーとメニューは全て上書きされます。')) return;
+        const formData = new FormData();
+        formData.append('menu_file', file);
+        try {
+            const response = await authenticatedAPIFetch(`${API_BASE_URL}/admin/upload_menu`, { method: 'POST', body: formData });
+            const result = await response.json();
+            alert(result.message);
+            init();
+            menuFileInput.value = '';
+        } catch (error) {
+            alert(`アップロードに失敗: ${error.message}`);
+        }
+    });
     fetchSalesBtn.addEventListener('click', async () => {
         const startDate = startDateInput.value;
         const endDate = endDateInput.value;
@@ -627,4 +598,39 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    adminCategoryTabs.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const selectedCategoryId = e.target.dataset.categoryId;
+            adminCategoryTabs.querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+            filterAdminProductsByCategory(selectedCategoryId);
+        }
+    });
+    
+    // ★★★ 全システム終了機能を追加 ★★★
+    const shutdownBtn = document.getElementById('system-shutdown-btn');
+    if (shutdownBtn) {
+        shutdownBtn.addEventListener('click', () => {
+            if (confirm('他の画面も全て終了しますが、よろしいですか？')) {
+                localStorage.setItem('system_shutdown_request', Date.now());
+                
+                setTimeout(() => {
+                    localStorage.removeItem('staff_token');
+                    localStorage.removeItem('system_shutdown_request');
+                    alert('全システムを終了し、ログアウトしました。');
+                    window.location.href = '/login.html';
+                }, 100);
+            }
+        });
+    }
+
+    // 初期化処理
+    async function init() {
+        await loadCategories();
+        await loadProducts();
+        await loadOpeningSettings();
+        await loadStoreInfo();
+    }
+    
+    init();
 });

@@ -341,6 +341,24 @@
             font-size: 1.2em;
             color: #777;
         }
+        
+        /* ★★★ 終了ボタン用のスタイルを追加 ★★★ */
+        .shutdown-button {
+            background-color: #e74c3c;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            float: right;
+            margin-top: -55px; /* h1との位置を調整 */
+            margin-right: 10px;
+        }
+        .shutdown-button:hover {
+            background-color: #c0392b;
+        }
 
         @media (max-width: 992px) {
             .form-grid-new {
@@ -356,12 +374,21 @@
             .form-grid-new {
                 grid-template-columns: 1fr;
             }
+            .shutdown-button {
+                float: none;
+                width: 100%;
+                margin-top: 15px;
+                margin-bottom: 15px;
+                margin-right: 0;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>メニュー管理画面</h1>
+        <!-- ★★★ 終了ボタンのHTMLを追加 ★★★ -->
+        <button id="system-shutdown-btn" class="shutdown-button">全システムを終了</button>
         
         <div class="section">
             <h2>売上分析</h2>
@@ -441,13 +468,7 @@
 
         <div class="section">
             <h2>メニュー一覧</h2>
-             <!-- ▼▼▼ ここから追加 ▼▼▼ -->
-            <div id="admin-category-tabs" class="category-tabs-admin">
-                <!-- JavaScriptによって、ここにタブが自動的に生成されます -->
-                <p>カテゴリーを読み込み中...</p>
-            </div>
-            <!-- ▲▲▲ ここまで追加 ▲▲▲ -->
-             
+            <div id="admin-category-tabs" class="category-tabs-admin"></div>
             <table id="products-table">
                 <thead>
                     <tr><th>ID</th><th>品名</th><th>価格(円)</th><th>カテゴリー</th><th>品切れ設定</th><th>編集 / 削除</th></tr>
@@ -535,22 +556,21 @@
                 <div class="form-grid">
                     <div>
                         <label for="store-name">店舗名</label>
-                        <input type="text" id="store-name" name="store_name" placeholder="店舗名 (例: レストラン My Order LINK)" required>
+                        <input type="text" id="store-name" name="store_name" placeholder="店舗名" required>
                     </div>
                     <div>
                         <label for="store-address">住所</label>
-                        <input type="text" id="store-address" name="store_address" placeholder="住所 (例: 東京都〇〇区〇〇 1-2-3)">
+                        <input type="text" id="store-address" name="store_address" placeholder="住所">
                     </div>
                     <div>
                         <label for="store-tel">電話番号</label>
-                        <input type="text" id="store-tel" name="store_tel" placeholder="電話番号 (例: 03-1234-5678)">
+                        <input type="text" id="store-tel" name="store_tel" placeholder="電話番号">
                     </div>
                     <div>
                         <label for="store-receipt-note">補足情報</label>
-                        <input type="text" id="store-receipt-note" name="store_receipt_note" placeholder="補足情報 (例: インボイス登録番号 T123456...)">
+                        <input type="text" id="store-receipt-note" name="store_receipt_note" placeholder="補足情報">
                     </div>
                 </div>
-                
                 <hr>
                 <h4>レビュー誘導QRコード (任意)</h4>
                 <p>レシート下部に印刷するQRコード画像を設定できます。</p>
@@ -559,11 +579,10 @@
                     <input type="file" id="store-qr-code-file" name="store_qr_code" accept="image/*">
                     <p>現在のQRコード:</p>
                     <div class="image-preview-container">
-                        <img id="current-qr-code-image" src="" alt="QRコードが設定されていません" style="display:none;">
+                        <img id="current-qr-code-image" src="" alt="QRコード未設定" style="display:none;">
                         <button type="button" class="delete-image-btn hidden" id="delete-qr-code-btn">削除</button>
                     </div>
                 </div>
-
                 <div class="form-actions">
                     <button type="submit" id="save-store-info-btn" style="background-color: #34495e; color: white;">店舗情報を保存</button>
                 </div>
@@ -574,7 +593,7 @@
             <h2>オープニング画面設定</h2>
             <form id="opening-settings-form">
                 <div>
-                    <label for="opening-message">表示メッセージ (画像の上に表示):</label>
+                    <label for="opening-message">表示メッセージ:</label>
                     <textarea id="opening-message" name="opening_message" placeholder="例: ご来店ありがとうございます！"></textarea>
                 </div>
                 <div>
@@ -584,16 +603,14 @@
                         <label><input type="radio" name="writing_mode" value="vertical-rl"> 縦書き</label>
                     </div>
                 </div>
-
                 <hr>
-                
                 <h4>スライドショー設定</h4>
                 <div>
                     <label for="opening-effect">切り替え効果:</label>
                     <select id="opening-effect" name="opening_effect">
                         <option value="fade">フェード</option>
-                        <option value="blur">ブラー (ぼかし)</option>
-                        <option value="dissolve">ディゾルブ (クロスフェード)</option>
+                        <option value="blur">ブラー</option>
+                        <option value="dissolve">ディゾルブ</option>
                         <option value="slide">スライド</option>
                     </select>
                 </div>
@@ -601,25 +618,22 @@
                     <label for="opening-duration">画像1枚の表示時間 (秒):</label>
                     <input type="number" id="opening-duration" name="opening_duration" min="1" value="5">
                 </div>
-
                 <hr>
-
                 <div>
                     <label for="opening-image-file-1">表示画像 1:</label>
                     <input type="file" id="opening-image-file-1" name="opening_image_1" accept="image/*">
                     <p>現在の画像1:</p>
                     <div class="image-preview-container">
-                        <img id="current-opening-image-1" src="" alt="画像1が設定されていません" style="display:none;">
+                        <img id="current-opening-image-1" src="" alt="画像1未設定" style="display:none;">
                         <button type="button" class="delete-image-btn hidden" id="delete-image-btn-1" data-image-number="1">削除</button>
                     </div>
                 </div>
-                
                 <div>
-                    <label for="opening-image-file-2">表示画像 2 (設定するとスライドショーになります):</label>
+                    <label for="opening-image-file-2">表示画像 2:</label>
                     <input type="file" id="opening-image-file-2" name="opening_image_2" accept="image/*">
                     <p>現在の画像2:</p>
                      <div class="image-preview-container">
-                        <img id="current-opening-image-2" src="" alt="画像2が設定されていません" style="display:none;">
+                        <img id="current-opening-image-2" src="" alt="画像2未設定" style="display:none;">
                         <button type="button" class="delete-image-btn hidden" id="delete-image-btn-2" data-image-number="2">削除</button>
                     </div>
                 </div>

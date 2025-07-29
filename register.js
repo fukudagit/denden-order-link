@@ -1,6 +1,18 @@
 // register.js (最終版・文法修正済み)
 
 document.addEventListener('DOMContentLoaded', () => {
+      // --- ここから追記 ---
+    // 管理者からのシステム終了通知を監視
+    window.addEventListener('storage', (event) => {
+        if (event.key === 'system_shutdown_request') {
+            // 他のタブでシステム終了が要求されたら、即座にログアウトする
+            localStorage.removeItem('staff_token');
+            alert('管理者によってシステムが終了されました。ログイン画面に戻ります。');
+            window.location.href = '/login.html';
+        }
+    });
+    // --- ここまで追記 ---
+    
     const token = localStorage.getItem('staff_token');
     if (!token) {
         window.location.href = '/login.html';
