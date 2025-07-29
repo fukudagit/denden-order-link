@@ -78,19 +78,27 @@
         .role-selection button:hover {
             background-color: #218838;
         }
-
-/* ここから追記 */
-.manual-button {
-    /* ... (他のスタイル) ... */
-    background-color: #f39c12; /* オレンジ色に変更 */
-    /* ... (他のスタイル) ... */
-}
-.manual-button:hover {
-    background-color: #e67e22; /* マウスを乗せた時の、少し濃いオレンジ色 */
-}
-/* ここまで追記 */
-
-
+        
+        /* ★★★ マニュアルボタンのスタイルを修正 ★★★ */
+        .manual-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f39c12; /* オレンジ色 */
+            color: #ffffff; /* 白 */
+            font-size: 1.3em; /* 少し大きく */
+            font-weight: 700; /* 太く */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* わずかな影 */
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+        .manual-button:hover {
+            background-color: #e67e22;
+        }
     </style>
 </head>
 <body>
@@ -111,16 +119,13 @@
             </div>
             <button type="submit">ログイン</button>
         </form>
-
-<!-- ここから追記 -->
-<div style="margin-top: 25px;">
-    <a href="ROS_manual/manual-cover.html" class="manual-button">操作マニュアルを見る</a>
-</div>
-<!-- ここまで追記 -->
-
+        <!-- ★★★ ボタンのHTMLは変更なし ★★★ -->
+        <div style="margin-top: 25px;">
+             <a href="/ROS_manual/manual-cover.html" target="_blank" rel="noopener noreferrer" class="manual-button">操作マニュアルを見る</a>
+        </div>
         <p id="error-message"></p>
     </div>
 
-    <script src="login.js?v=2.0"></script>
+    <script src="login.js"></script>
 </body>
 </html>
