@@ -23,8 +23,8 @@
         }
         .container {
             padding: 20px;
-            max-width: 90%; /* 横幅を画面サイズに追従するように変更 */
-            width: 700px; /* PCでの最大幅も指定 */
+            max-width: 90%;
+            width: 700px;
         }
         .hero-section {
             display: flex;
@@ -38,7 +38,7 @@
             border-radius: 50%;
             margin-bottom: 25px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transform: scale(1); /* アニメーションの開始状態を明示 */
+            transform: scale(1);
             animation: zoom-animation 3.5s ease-out forwards;
         }
         @keyframes zoom-animation {
@@ -47,14 +47,12 @@
             }
         }
         
-        /* ★★★ フォントサイズをvw単位に変更し、巨大化 ★★★ */
         h1 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
             color: #1a237e;
             margin: 0;
             letter-spacing: 1px;
-            /* vw単位: 画面の横幅の10%分の大きさ。スマホでもPCでも巨大に表示されます */
             font-size: 10vw; 
         }
         .subtitle {
@@ -62,10 +60,8 @@
             font-weight: 700;
             color: #546e7a;
             margin-top: 10px;
-            /* vw単位: 画面の横幅の4%分の大きさ */
             font-size: 4vw;
         }
-        /* PCなど画面幅が広い場合、文字が大きくなりすぎないように上限を設定 */
         @media (min-width: 1000px) {
             h1 { font-size: 100px; }
             .subtitle { font-size: 40px; }
@@ -103,7 +99,40 @@
         .btn-staff {
             background-color: #388e3c;
         }
+
+        /* ★★★ ここからスマートフォン用の調整を追加 ★★★ */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            .logo {
+                width: 180px;
+                height: 180px;
+                margin-bottom: 20px;
+            }
+            @keyframes zoom-animation {
+                100% {
+                    transform: scale(1.2); /* スマホでは拡大率を少し抑える */
+                }
+            }
+            h1 {
+                font-size: 15vw; /* vw単位を調整 */
+            }
+            .subtitle {
+                font-size: 5vw; /* vw単位を調整 */
+            }
+            .concept {
+                font-size: 1em;
+                margin-bottom: 30px;
+            }
+            .btn {
+                font-size: 1.1em;
+                padding: 12px 20px;
+            }
+        }
+        /* ★★★ スマートフォン用の調整ここまで ★★★ */
     </style>
+    
 </head>
 <body>
     <div class="container" id="main-container">
