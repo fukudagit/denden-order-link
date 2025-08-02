@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageUrl1 = settings.opening_image_url;
             const imageUrl2 = settings.opening_image_url_2;
             const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
-            // ★★★ メッセージの取得方法を、より安全な形に修正 ★★★
-            const messageText = settings.opening_message || ''; 
+            const messageText = settings.opening_message || '';
+            const writingMode = settings.opening_writing_mode || 'horizontal-tb';
 
             if (!imageUrl1) return Promise.resolve();
 
@@ -63,17 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const logoWrapper = document.createElement('div');
                 logoWrapper.className = 'opening-element logo-container active';
-                
-                // ★★★ メッセージが存在する場合のみ、HTMLに追加するように修正 ★★★
-                let messageHtml = '';
-                if (messageText) {
-                    messageHtml = `<div class="customer-opening-message">${messageText.replace(/\n/g, '<br>')}</div>`;
-                }
-
                 logoWrapper.innerHTML = `
                     <img src="${logoUrl}" class="customer-opening-logo" alt="Logo">
-                    ${messageHtml}
                     <div class="customer-opening-credit">${creditText}</div>`;
+
+                // ★★★ メッセージ要素をここで作成 ★★★
+                let messageElement = null;
+                if (messageText) {
+                    messageElement = document.createElement('div');
+                    messageElement.className = `opening-element customer-opening-message ${writingMode}`;
+                    messageElement.innerHTML = messageText.replace(/\n/g, '<br>');
+                }
 
                 const slide1 = document.createElement('div');
                 slide1.className = 'opening-element slide';
@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 overlay.appendChild(logoWrapper);
                 overlay.appendChild(slide1);
+                if (messageElement) overlay.appendChild(messageElement); // メッセージ要素を追加
                 
                 if (imageUrl2) {
                     const slide2 = document.createElement('div');
@@ -97,12 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     logoWrapper.classList.remove('active');
                     slide1.classList.add('active');
+                    // ★★★ 画像1と同時にメッセージも表示 ★★★
+                    if (messageElement) messageElement.classList.add('active');
 
                     setTimeout(() => {
                         if (imageUrl2 && overlay.querySelectorAll('.slide').length > 1) {
                             const slides = overlay.querySelectorAll('.slide');
                             slides[0].classList.remove('active');
                             slides[1].classList.add('active');
+                            // メッセージは画像2でも表示し続ける（不要ならこの行を消す）
+                            if (messageElement) messageElement.classList.add('active'); 
 
                             setTimeout(() => {
                                 overlay.classList.add('is-closing');
@@ -121,7 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return Promise.resolve();
         }
     }
-        
+    
+
+
     
     async function initializeMenu() {
         try {
@@ -450,3 +457,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startApp();
 });
+
+/* --- ここまで --- */
