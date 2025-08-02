@@ -657,4 +657,33 @@ header {
     letter-spacing: 1px;
     text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
 }
+/* ... (@keyframes wrapper-zoom の下あたり) ... */
+
+.customer-opening-logo {
+    width: 250px; height: 250px;
+    max-width: 50vw; max-height: 50vh;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+/* ★★★ このブロックをまるごと追記してください ★★★ */
+.customer-opening-message {
+    z-index: 20; /* 画像より手前に表示 */
+    background-color: rgba(0, 0, 0, 0.4); /* 見やすいように少しだけ背景 */
+    padding: 20px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white; /* ★文字色を白に指定 */
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    line-height: 1.6;
+    font-size: 1.8em;
+}
+.customer-opening-message.vertical-rl {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+/* ★★★ 追記ここまで ★★★ */
+
+
+    /* ... (以下略) ... */
 /* --- ここまで --- */
