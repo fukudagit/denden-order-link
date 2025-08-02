@@ -562,6 +562,7 @@ header {
 }
 
 /* --- 顧客向けオープニング画面のスタイル（最終FIX版 ver.3） --- */
+/* --- 顧客向けオープニング画面のスタイル（最終FIX版） --- */
 #customer-opening-overlay {
     position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
@@ -586,8 +587,6 @@ header {
     align-items: center;
     opacity: 0;
     transition: opacity 1.5s ease-in-out;
-    padding: 20px;
-    box-sizing: border-box;
 }
 .opening-element.active {
     opacity: 1;
@@ -597,6 +596,7 @@ header {
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
+    transform: scale(1);
 }
 .opening-element.slide.active {
     animation: slide-zoom 3.5s ease-out forwards;
@@ -606,32 +606,44 @@ header {
     to { transform: scale(1.1); }
 }
 
-.customer-opening-logo {
-    width: 250px; height: 250px;
-    max-width: 70vw; max-height: 50vh;
-    border-radius: 50%;
-    object-fit: contain;
-    animation: customer-zoom 2.0s ease-out forwards;
+.opening-element.logo-container {
+    animation: wrapper-zoom 2.0s ease-out forwards;
 }
-@keyframes customer-zoom {
+@keyframes wrapper-zoom {
     from { transform: scale(1); }
     to { transform: scale(1.5); }
 }
 
-.customer-opening-message {
-    margin-top: 25px;
-    font-size: 1.5em; /* ★サイズをem単位で調整 */
-    color: white;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
-    text-align: center;
-    font-weight: bold;
+.customer-opening-logo {
+    width: 250px; height: 250px;
+    max-width: 50vw; max-height: 50vh;
+    border-radius: 50%;
+    object-fit: contain;
 }
 
+/* ★★★ メッセージのスタイルを修正 ★★★ */
+.customer-opening-message {
+    z-index: 20; /* 画像より手前に表示 */
+    background-color: rgba(0, 0, 0, 0.4); /* 見やすいように少しだけ背景 */
+    padding: 20px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    line-height: 1.6;
+    font-size: 1.8em;
+}
+.customer-opening-message.vertical-rl {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+
 .customer-opening-credit {
-    margin-top: 15px;
+    margin-top: 20px;
     font-family: 'Montserrat', sans-serif;
     color: rgba(255, 255, 255, 0.8);
-    font-size: 1em; /* ★サイズをem単位で調整 */
+    font-size: 1em;
     font-weight: 500;
     letter-spacing: 1px;
     text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
