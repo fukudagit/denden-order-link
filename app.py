@@ -173,10 +173,11 @@ def get_opening_settings():
     if settings.get('opening_image_path_2'):
         settings['opening_image_url_2'] = url_for('static', filename=settings['opening_image_path_2'], _external=True)
     
-    # --- ここから追記 ---
-    # クレジット情報をsettingsに追加
+    # ★★★ クレジット情報に加えて、メッセージも確実に渡すように修正 ★★★
+    cursor.execute("SELECT value FROM settings WHERE key = 'opening_message'")
+    msg_row = cursor.fetchone()
+    settings['opening_message'] = msg_row['value'] if msg_row else ''
     settings['credit_text'] = "powered by RISE with Google AI Studio"
-    # --- ここまで追記 ---
 
     return jsonify(settings)
 

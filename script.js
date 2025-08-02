@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageUrl1 = settings.opening_image_url;
             const imageUrl2 = settings.opening_image_url_2;
             const creditText = settings.credit_text || "powered by RISE with Google AI Studio";
+            // ★★★ メッセージの取得方法を、より安全な形に修正 ★★★
+            const messageText = settings.opening_message || ''; 
+
             if (!imageUrl1) return Promise.resolve();
 
             return new Promise(resolve => {
@@ -60,8 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const logoWrapper = document.createElement('div');
                 logoWrapper.className = 'opening-element logo-container active';
+                
+                // ★★★ メッセージが存在する場合のみ、HTMLに追加するように修正 ★★★
+                let messageHtml = '';
+                if (messageText) {
+                    messageHtml = `<div class="customer-opening-message">${messageText.replace(/\n/g, '<br>')}</div>`;
+                }
+
                 logoWrapper.innerHTML = `
                     <img src="${logoUrl}" class="customer-opening-logo" alt="Logo">
+                    ${messageHtml}
                     <div class="customer-opening-credit">${creditText}</div>`;
 
                 const slide1 = document.createElement('div');
@@ -85,13 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 setTimeout(() => {
                     logoWrapper.classList.remove('active');
-                    slide1.classList.add('active'); // activeクラスでアニメーションと表示を開始
+                    slide1.classList.add('active');
 
                     setTimeout(() => {
                         if (imageUrl2 && overlay.querySelectorAll('.slide').length > 1) {
                             const slides = overlay.querySelectorAll('.slide');
                             slides[0].classList.remove('active');
-                            slides[1].classList.add('active'); // activeクラスでアニメーションと表示を開始
+                            slides[1].classList.add('active');
 
                             setTimeout(() => {
                                 overlay.classList.add('is-closing');
@@ -110,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return Promise.resolve();
         }
     }
+        
     
     async function initializeMenu() {
         try {
