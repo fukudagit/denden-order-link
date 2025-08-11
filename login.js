@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // ★★★ ここがHTTPSになっていることを確認 ★★★
-            const response = await fetch('https://my-order-link.onrender.com/api/login', {
-                method: 'POST',
+            const response = await fetch(`${API_BASE_URL}/api/login`, {
+                    method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
