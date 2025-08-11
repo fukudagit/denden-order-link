@@ -891,5 +891,8 @@ def init_db_command():
     print("Initialized and migrated the database.")
 
 # --- 実行 ---
+# --- 実行 ---
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Renderが指定する環境変数'PORT'を取得。なければ開発用に5000を使う
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
