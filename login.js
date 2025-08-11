@@ -1,3 +1,8 @@
+// ★★★ ここを追記 ★★★
+// ファイルの最初に、APIのベースURLを定義します。
+// これにより、以降のどのコードからもこの定数を正しく参照できます。
+const API_BASE_URL = window.location.origin;
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const usernameInput = document.getElementById('username');
@@ -17,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = passwordInput.value;
 
         try {
-            // ★★★ ここがHTTPSになっていることを確認 ★★★
+            // これで `API_BASE_URL` が正しく認識されます
             const response = await fetch(`${API_BASE_URL}/api/login`, {
                     method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
